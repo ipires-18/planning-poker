@@ -9,6 +9,7 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "smoke": "pnpm --filter @pp/db smoke",
+    "awake": "pnpm --filter @pp/db awake",
     "seed": "pnpm --filter @pp/db seed",
     "demo:consenso": "pnpm --filter @pp/db demo:consenso",
     "db:start": "pnpm --filter @pp/db start",

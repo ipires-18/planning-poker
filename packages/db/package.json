@@ -10,7 +10,8 @@
     "reset": "supabase db reset",
     "smoke": "node scripts/smoke.mjs",
     "seed": "node scripts/seed-room.mjs",
-    "demo:consenso": "node scripts/demo-consenso.mjs"
+    "demo:consenso": "node scripts/demo-consenso.mjs",
+    "awake": "node scripts/keep-awake.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0"

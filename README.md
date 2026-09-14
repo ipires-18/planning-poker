@@ -256,6 +256,26 @@ rodar se o `.env.local` estiver apontando para fora da máquina. Para forçar,
 | `pnpm smoke` | Roda as 169 verificações de ponta a ponta |
 | `pnpm seed` | Cria uma sala de demonstração já povoada |
 | `pnpm demo:consenso 13` | Deixa uma sala pronta para ver a comemoração |
+| `pnpm awake` | Visita a produção para o projeto não pausar (ver abaixo) |
+
+## A visita semanal
+
+O plano Free do Supabase **pausa um projeto depois de 7 dias sem atividade**.
+Despausar é um botão no painel, mas quem descobre que era preciso é a pessoa que
+abriu o link e não viu nada.
+
+```bash
+pnpm awake
+```
+
+Ele entra como convidado e lê uma linha — o mínimo que conta como atividade.
+Não cria sala, não escreve nada e não usa chave secreta. Aponta para a produção
+lendo `apps/web/.env.local`, e recusa rodar contra um banco local, onde não há o
+que acordar.
+
+Rodar uma vez por semana basta. Na prática, o melhor momento é logo antes de
+mandar o link para alguém: aí você confirma que está de pé no único momento em
+que isso importa.
 
 ## Estrutura
 
