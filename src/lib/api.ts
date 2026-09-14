@@ -251,7 +251,3 @@ export async function setQaVoting(roomId: string, enabled: boolean) {
 export async function endGame(roomId: string) {
   fail((await supabase.rpc('end_game', { p_room_id: roomId })).error)
 }
-
-export async function leaveRoom(playerId: string) {
-  fail((await supabase.from('players').delete().eq('id', playerId)).error)
-}

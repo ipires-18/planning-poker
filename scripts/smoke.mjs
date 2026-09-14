@@ -655,11 +655,15 @@ const { error: emptyLink } = await po.client.rpc('update_story', {
 })
 check('link em branco vira nulo, sem erro', !emptyLink, emptyLink?.message)
 
-const { error: directHostile } = await po.client
-  .from('stories')
-  .update({ link: 'javascript:alert(1)' })
-  .eq('id', storyL.id)
-check('nem escrita direta na tabela passa link hostil', Boolean(directHostile))
+// Sem policy de UPDATE a escrita não dá erro: ela só não pega linha nenhuma.
+await po.client.from('stories').update({ link: 'javascript:alert(1)' }).eq('id', storyL.id)
+const { data: linkDepois } = await po.client
+  .from('stories').select('link').eq('id', storyL.id).single()
+check(
+  'nem escrita direta na tabela grava link hostil',
+  linkDepois.link === null || linkDepois.link.startsWith('https://'),
+  String(linkDepois.link),
+)
 
 await po.client.rpc('end_game', { p_room_id: roomL })
 
@@ -756,6 +760,71 @@ check(
   Number(qaCapacity.capacity_points) === 0,
   `ficou com ${qaCapacity.capacity_points}`,
 )
+
+/* ------------------------------------------- escrita direta nas tabelas --- */
+console.log('\nEscrita direta nas tabelas (sem passar pelos RPCs)')
+
+const alvo = await newUser('Alvo')
+const { data: roomX } = await alvo.client.rpc('create_room', {
+  p_session_name: 'Alvo',
+  p_host_name: 'Dono',
+  p_stories: [{ title: 'História', link: null, kind: 'frontend' }],
+})
+
+const mallory = await newUser('Mallory')
+const { data: malloryId } = await mallory.client.rpc('join_room', {
+  p_room_id: roomX, p_name: 'Mallory', p_role: 'frontend',
+})
+
+const { data: storyX } = await alvo.client.from('stories').select('id').eq('room_id', roomX).single()
+await ana.client.rpc('join_room', { p_room_id: roomX, p_name: 'Ana', p_role: 'backend' })
+await ana.client.rpc('cast_vote', {
+  p_room_id: roomX, p_story_id: storyX.id, p_side: 'frontend', p_round: 1, p_value: '8',
+})
+
+// Sem policy de UPDATE o Postgres não devolve erro: a escrita apenas não pega
+// linha nenhuma. Por isso estes testes conferem o estado, e não o erro.
+const lerMallory = async () =>
+  (await alvo.client.from('players').select('role, accumulated_points').eq('id', malloryId).single()).data
+
+await mallory.client.from('players').update({ role: 'tech_lead' }).eq('id', malloryId)
+check(
+  'participante não se promove a Tech Lead escrevendo na própria linha',
+  (await lerMallory()).role === 'frontend',
+)
+
+const { error: revealAsFake } = await mallory.client.rpc('reveal_round', { p_room_id: roomX })
+check('e por isso não consegue revelar', Boolean(revealAsFake))
+
+const { data: espiados } = await mallory.client.from('votes').select('*').eq('room_id', roomX)
+check('o voto alheio continua invisível para ela', espiados.length === 0, `viu ${espiados.length}`)
+
+await mallory.client.from('players').update({ accumulated_points: 999 }).eq('id', malloryId)
+check('ninguém se auto-atribui pontos', Number((await lerMallory()).accumulated_points) === 0)
+
+await alvo.client.from('rooms').update({ expires_at: '2099-01-01' }).eq('id', roomX)
+const { data: salaX } = await alvo.client.from('rooms').select('expires_at').eq('id', roomX).single()
+check(
+  'nem o host estica a validade da sala',
+  new Date(salaX.expires_at).getFullYear() < 2030,
+  salaX.expires_at,
+)
+
+await alvo.client.from('stories').delete().eq('room_id', roomX)
+const { count: sobraram } = await alvo.client
+  .from('stories').select('*', { count: 'exact', head: true }).eq('room_id', roomX)
+check('nem apaga história por fora do RPC', sobraram === 1, `sobrou ${sobraram}`)
+
+await alvo.client.rpc('end_game', { p_room_id: roomX })
+
+/* --------------------------------------------------------------- validade --- */
+console.log('\nValidade da sala')
+
+const { data: novaSala } = await po.client.from('rooms').select('created_at, expires_at').eq('id', roomId).maybeSingle()
+if (novaSala) {
+  const horas = (new Date(novaSala.expires_at) - new Date(novaSala.created_at)) / 36e5
+  check('a sala nasce valendo 24 horas', Math.round(horas) === 24, `${horas}h`)
+}
 
 /* ------------------------------------------------------------- encerrar --- */
 console.log('\nEncerramento')

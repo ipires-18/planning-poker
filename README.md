@@ -57,13 +57,23 @@ banco guarda as duas regras separadas: `role_scores()` é fixa por papel,
 apaga a carta dela, senão ficaria um voto contando para a revelação de quem não
 deveria mais ter baralho.
 
+**A tabela não aceita escrita direta.** Não existe policy de INSERT, UPDATE ou
+DELETE em tabela nenhuma — só as de leitura. Toda escrita passa por função
+`security definer`, que é onde as regras moram. Isso não é zelo abstrato: com
+`players_update` aberta, qualquer participante podia rodar
+`update players set role = 'tech_lead'` na própria linha, virar host e revelar
+as cartas para ler o voto de todo mundo antes da hora.
+
+**Sala de 24 horas.** Uma cerimônia dura duas; guardar o resto depois disso é
+armazenar dado de gente por nada — e o resumo final já sai da sala pelo botão de
+copiar. A validade é verificada na leitura, então "expira em 24 horas" não
+depende de quando o cron de faxina roda.
+
 **Teto de 5 sessões abertas por pessoa.** Conta só o que está de pé: encerrar
-libera vaga na hora, e sessões paradas há mais de sete dias deixam de ocupar
-vaga sozinhas — porque muita gente fecha a aba em vez de clicar em "Encerrar",
-e cinco sessões abandonadas travando alguém por trinta dias teria cara de bug,
-não de proteção. O limite não é muralha: com login anônimo dá para pedir um
-usuário novo por sala, e quem segura isso é o rate limit de sign-in por IP do
-Supabase. O que ele faz é barrar o laço acidental e encarecer o abuso.
+libera vaga na hora, e o que for abandonado se solta sozinho quando a sala
+expira. O limite não é muralha: com login anônimo dá para pedir um usuário novo
+por sala, e quem segura isso é o rate limit de sign-in por IP do Supabase. O que
+ele faz é barrar o laço acidental e encarecer o abuso.
 
 **Não existe carta de 0.** Zero não é estimativa: se a história foi feita, ela
 vale alguma coisa — e uma história de 0 ponto ainda consome dia de alguém sem
@@ -108,6 +118,8 @@ Resumo do que protege o quê:
 | Função com privilégio | As 29 `security definer` fixam `search_path` |
 | Clickjacking / MIME / CSP | Cabeçalhos no `vercel.json` |
 | Enchente de salas | Teto de 5 sessões abertas por pessoa |
+| Escrita fora das regras | Nenhuma policy de escrita: tudo passa pelas funções |
+| Dado parado | Sala expira em 24 horas e some na faxina |
 
 
 O ponto central do projeto: **o voto é escondido pelo Postgres, não pelo React.**
@@ -155,7 +167,9 @@ npm run dev
 Opcional — limpeza automática das salas expiradas, via `pg_cron`:
 
 ```sql
-select cron.schedule('purge-rooms', '0 4 * * *', 'select purge_expired_rooms()');
+-- De hora em hora: a sala vale 24h, então uma faxina diária deixaria lixo
+-- acumulado por até um dia inteiro depois do vencimento.
+select cron.schedule('purge-rooms', '0 * * * *', 'select purge_expired_rooms()');
 ```
 
 ## Credenciais
