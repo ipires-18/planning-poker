@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <defs>
+    <linearGradient id="c0" x1="0" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#06b6d4"/><stop offset="1" stop-color="#5274c7"/></linearGradient>
+    <linearGradient id="c1" x1="0" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#4e7aa3"/></linearGradient>
+    <linearGradient id="c2" x1="0" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#803cd6"/></linearGradient>
+    <linearGradient id="c3" x1="0" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#ec4899"/><stop offset="1" stop-color="#a041aa"/></linearGradient>
+    <linearGradient id="c4" x1="0" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#9f6f8b"/></linearGradient>
+    <linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a0b3d"/><stop offset="1" stop-color="#0c0519"/>
+    </linearGradient>
+    <linearGradient id="titulo" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9670ff"/><stop offset="0.55" stop-color="#ec4899"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="brilho" x="-40%" y="-40%" width="180%" height="200%">
+      <feDropShadow dx="0" dy="26" stdDeviation="26" flood-color="#7c3aed" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#fundo)"/>
+  <g filter="url(#brilho)">
+    <g transform="translate(392 539) rotate(-18)"><rect x="-62" y="-90" width="124" height="180" rx="26" fill="url(#c0)"/><text x="0" y="4" text-anchor="middle" dominant-baseline="central" fill="#fff" font-family="Avenir Next, Futura, Helvetica Neue, sans-serif" font-size="56" font-weight="900" font-style="italic">3</text></g>
+    <g transform="translate(496 512) rotate(-9)"><rect x="-62" y="-90" width="124" height="180" rx="26" fill="url(#c1)"/><text x="0" y="4" text-anchor="middle" dominant-baseline="central" fill="#fff" font-family="Avenir Next, Futura, Helvetica Neue, sans-serif" font-size="56" font-weight="900" font-style="italic">5</text></g>
+    <g transform="translate(600 503) rotate(0)"><rect x="-62" y="-90" width="124" height="180" rx="26" fill="url(#c2)"/><text x="0" y="4" text-anchor="middle" dominant-baseline="central" fill="#fff" font-family="Avenir Next, Futura, Helvetica Neue, sans-serif" font-size="56" font-weight="900" font-style="italic">8</text></g>
+    <g transform="translate(704 512) rotate(9)"><rect x="-62" y="-90" width="124" height="180" rx="26" fill="url(#c3)"/><text x="0" y="4" text-anchor="middle" dominant-baseline="central" fill="#fff" font-family="Avenir Next, Futura, Helvetica Neue, sans-serif" font-size="56" font-weight="900" font-style="italic">13</text></g>
+    <g transform="translate(808 539) rotate(18)"><rect x="-62" y="-90" width="124" height="180" rx="26" fill="url(#c4)"/><text x="0" y="4" text-anchor="middle" dominant-baseline="central" fill="#fff" font-family="Avenir Next, Futura, Helvetica Neue, sans-serif" font-size="56" font-weight="900" font-style="italic">21</text></g>
+  </g>
+  <text x="600" y="697" text-anchor="middle" fill="url(#titulo)"
+        font-family="Avenir Next, Futura, Helvetica Neue, sans-serif"
+        font-size="82" font-weight="900" letter-spacing="-2">Planning Poker</text>
+  <text x="600" y="755" text-anchor="middle" fill="#b4a6d6"
+        font-family="Avenir Next, Helvetica Neue, sans-serif" font-size="27" font-weight="600">
+    Estimativa de sprint em tempo real, sem cadastro
+  </text>
+  <text x="600" y="818" text-anchor="middle" fill="#7a6b9e"
+        font-family="Avenir Next, Helvetica Neue, sans-serif" font-size="20"
+        font-weight="700" letter-spacing="3">NINGUÉM VÊ A CARTA DE NINGUÉM ANTES DA HORA</text>
+</svg>
