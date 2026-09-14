@@ -1,0 +1,10 @@
+{
+  "name": "@pp/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./base.json": "./base.json",
+    "./react-lib.json": "./react-lib.json",
+    "./vite-app.json": "./vite-app.json"
+  }
+}

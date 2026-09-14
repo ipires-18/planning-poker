@@ -1,0 +1,66 @@
+---
+title: Organismos
+sidebar_position: 3
+---
+
+# Organismos
+
+Peças que já são um pedaço de tela. Compõem moléculas e átomos, carregam estado
+de apresentação e costumam ter comportamento de acessibilidade não trivial:
+foco preso, fechar com Escape, anunciar mudança.
+
+## Modal
+
+O React Aria cuida da parte difícil — foco preso, Escape, `aria-modal`, rolagem
+do fundo travada. O que sobra aqui é o que é nosso: largura em dois tamanhos,
+porque painel com tabela dentro não cabe na largura de conversa. Já apareceu na
+tela com os nomes das pessoas truncados numa letra só.
+
+```jsx live
+function ExemploModal() {
+  const [aberto, setAberto] = React.useState(false)
+  const [largo, setLargo] = React.useState(false)
+
+  return (
+    <>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <Button onPress={() => { setLargo(false); setAberto(true) }}>
+          Abrir modal
+        </Button>
+        <Button variant="secondary" onPress={() => { setLargo(true); setAberto(true) }}>
+          Abrir largo
+        </Button>
+      </div>
+
+      <Modal
+        open={aberto}
+        onClose={() => setAberto(false)}
+        size={largo ? 'lg' : 'md'}
+        title={largo ? 'Time e capacidade' : 'Parar por hoje?'}
+        description={largo ? 'Quanto cada pessoa assume nesta sprint.' : undefined}
+      >
+        <div style={{ display: 'grid', gap: 16 }}>
+          <p style={{ margin: 0, opacity: 0.75 }}>
+            Experimente o Tab e o Escape: o foco fica preso aqui dentro e volta
+            para o botão ao fechar.
+          </p>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Button variant="ghost" onPress={() => setAberto(false)}>
+              Voltar
+            </Button>
+            <Button variant="joy" onPress={() => setAberto(false)}>
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  )
+}
+```
+
+:::note Acessibilidade vem do React Aria
+Nada do comportamento acima foi escrito por nós. Trocar de base — Radix, Base UI
+ou React Aria — troca quem resolve isso, e é por isso que a escolha da base é
+uma decisão de arquitetura, não de gosto.
+:::

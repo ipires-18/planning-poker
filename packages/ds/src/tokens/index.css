@@ -1,0 +1,189 @@
+/* ============================================================================
+   Style guide do Planning Poker
+   ============================================================================
+
+   Direção: lúdico e colorido. Base violeta profunda, acentos vibrantes, cantos
+   generosos e movimento com mola.
+
+   Tudo aqui é token. Componente não escolhe cor nem tamanho de fonte na mão —
+   ele nomeia um papel ("superfície elevada", "texto secundário") e o tema
+   decide o valor. É o que faz o modo escuro existir sem duplicar componente.
+   ============================================================================ */
+
+@theme {
+  /* ------------------------------------------------------------------------
+     Cor — marca
+     A escala 400/500/600 é a que aparece: 500 é a cor de ação, 400 o realce
+     sobre fundo escuro, 600 o estado pressionado.
+     ------------------------------------------------------------------------ */
+  --color-brand-50: #f3f0ff;
+  --color-brand-100: #e9e2ff;
+  --color-brand-200: #d5c8ff;
+  --color-brand-300: #b8a1ff;
+  --color-brand-400: #9670ff;
+  --color-brand-500: #7c3aed;
+  --color-brand-600: #6d28d9;
+  --color-brand-700: #5b21b6;
+  --color-brand-800: #4c1d95;
+  --color-brand-900: #2e1065;
+  --color-brand-950: #1a0b3d;
+
+  /* ------------------------------------------------------------------------
+     Cor — acentos
+     Cada um carrega um significado fixo no produto. Não são cores decorativas:
+     trocar o acento de um papel troca o que a pessoa entende.
+     ------------------------------------------------------------------------ */
+  --color-punch: #ec4899; /* rosa   — QA, destaque quente */
+  --color-zest: #f59e0b; /* âmbar  — PO, atenção, "quase no limite" */
+  --color-mint: #10b981; /* verde  — Back-End, sucesso, dentro do limite */
+  --color-sky: #06b6d4; /* ciano  — Front-End */
+  --color-grape: #a855f7; /* uva    — Tech Lead */
+  --color-coral: #fb7185; /* coral  — erro, estouro, destrutivo */
+
+  /* ------------------------------------------------------------------------
+     Tipografia
+     Três famílias com papéis distintos: display para títulos, sans para texto
+     corrido e interface, mono para número que precisa alinhar (código de sala,
+     cronômetro, pontuação).
+     ------------------------------------------------------------------------ */
+  --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Escala tipográfica — razão 1.25 (terça maior) a partir de 16px.
+     Os dois primeiros degraus quebram a razão de propósito: rótulo em caixa
+     alta precisa de corpo menor que o texto para não competir com ele. */
+  --text-overline: 0.625rem; /* 10px — rótulo em caixa alta, com tracking largo */
+  --text-caption: 0.75rem; /*  12px — apoio, metadado */
+  --text-body-sm: 0.875rem; /* 14px — interface densa */
+  --text-body: 1rem; /*     16px — texto corrido */
+  --text-title-sm: 1.25rem; /* 20px */
+  --text-title: 1.5rem; /*    24px */
+  --text-display-sm: 2rem; /* 32px */
+  --text-display: 2.5rem; /*  40px */
+  --text-hero: 3.5rem; /*     56px — só na entrada */
+
+  /* Pesos. O DS usa três; o intermediário existe para texto corrido em
+     negrito, que com 900 ficaria pesado demais. */
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
+
+  /* Tracking — quanto menor o corpo, mais aberto precisa ser. */
+  --tracking-overline: 0.14em;
+  --tracking-tight: -0.02em;
+
+  /* ------------------------------------------------------------------------
+     Grid e espaçamento
+     Base de 4px. Toda medida do produto é múltiplo dela, o que faz peças
+     diferentes alinharem sem ninguém precisar conferir.
+     ------------------------------------------------------------------------ */
+  --spacing: 0.25rem;
+
+  /* Larguras de leitura. `prose` é o limite de linha confortável; `shell` é a
+     largura da mesa; `rail` é a barra lateral. */
+  --container-prose: 42rem;
+  --container-shell: 56rem;
+  --container-rail: 18rem;
+
+  /* Raios generosos, que é o que dá a sensação de brinquedo. */
+  --radius-control: 1rem; /* botão, campo */
+  --radius-card: 1.5rem; /* cartão, painel */
+  --radius-blob: 2.5rem; /* superfícies grandes */
+
+  /* ------------------------------------------------------------------------
+     Movimento
+     Duas curvas: mola para o que a pessoa acionou (precisa responder), e saída
+     suave para o que acontece sozinho (não deve chamar atenção).
+     ------------------------------------------------------------------------ */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --duration-instant: 120ms;
+  --duration-quick: 200ms;
+  --duration-settle: 300ms;
+  --duration-scene: 500ms;
+}
+
+/* ============================================================================
+   Superfícies e texto por papel
+   ============================================================================
+   Estes não vivem em @theme porque trocam de valor entre os temas. O @theme
+   inline logo abaixo os devolve para o Tailwind como se fossem cores normais.
+   ============================================================================ */
+
+:root {
+  --surface-base: #f7f5ff; /* fundo da página */
+  --surface-raised: #ffffff; /* cartão, cabeçalho, o que flutua */
+  --surface-sunken: #ece8fb; /* campo, poço, o que afunda */
+  --surface-border: #e0d9f5;
+
+  --text-strong: #1a0b3d; /* título e número */
+  --text-muted: #6b5f8a; /* texto corrido secundário */
+  --text-subtle: #9b90b8; /* rótulo, metadado, dica */
+
+  --glow: 0 18px 40px -20px rgb(124 58 237 / 0.45);
+  --ring-focus: var(--color-brand-400);
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --surface-base: #120a26;
+  --surface-raised: #1c1038;
+  --surface-sunken: #0c0519;
+  --surface-border: #2f2154;
+
+  --text-strong: #f5f1ff;
+  --text-muted: #b4a6d6;
+  --text-subtle: #7a6b9e;
+
+  --glow: 0 18px 50px -18px rgb(168 85 247 / 0.55);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-surface: var(--surface-base);
+  --color-raised: var(--surface-raised);
+  --color-sunken: var(--surface-sunken);
+  --color-hairline: var(--surface-border);
+  --color-ink: var(--text-strong);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-subtle: var(--text-subtle);
+}
+
+/* ============================================================================
+   Utilitários e movimento do DS
+   ============================================================================ */
+
+@utility ds-text-gradient {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-brand-400),
+    var(--color-punch),
+    var(--color-zest)
+  );
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes ds-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

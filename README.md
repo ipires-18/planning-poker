@@ -4,7 +4,18 @@ Estimativa de sprint em tempo real para times ágeis. Entra pelo link, escolhe a
 carta, e ninguém vê o voto de ninguém antes da revelação — garantido pelo banco,
 não pela interface.
 
-**Stack:** React 19 · TypeScript · Vite · Tailwind CSS v4 · Supabase (Postgres, RLS, Realtime)
+**Stack:** Turborepo · pnpm · React 19 · TypeScript · Vite · Tailwind v4 ·
+React Aria · shadcn/ui · Supabase (Postgres, RLS, Realtime) · Docusaurus
+
+```
+apps/
+├── web/      o produto
+└── docs/     a vitrine do design system
+packages/
+├── ds/       tokens, átomos, moléculas, organismos
+├── db/       schema, RLS, funções e os scripts que falam com o banco
+└── tsconfig/ as configs compartilhadas
+```
 
 ---
 
@@ -158,9 +169,9 @@ autorização é checada no servidor.
 ## Rodando localmente
 
 ```bash
-npm install
-cp .env.example .env.local   # preencha com as chaves do seu projeto Supabase
-npm run dev
+pnpm install
+cp apps/web/.env.example apps/web/.env.local   # preencha com suas chaves
+pnpm dev
 ```
 
 ### Configurando o Supabase
@@ -168,8 +179,7 @@ npm run dev
 1. Crie um projeto em [supabase.com](https://supabase.com).
 2. Em **Authentication → Providers**, ative **Anonymous sign-ins**.
 3. No **SQL Editor**, rode na ordem:
-   - `supabase/migrations/0001_init.sql`
-   - `supabase/migrations/0002_rpc.sql`
+   - todos os arquivos de `packages/db/supabase/migrations/`, em ordem
 4. Em **Project Settings → API**, copie `URL` e `anon public key` para o
    `.env.local`.
 
@@ -201,28 +211,54 @@ rodar se o `.env.local` estiver apontando para fora da máquina. Para forçar,
 
 | Comando | O que faz |
 |---|---|
-| `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Checagem de tipos + build de produção |
-| `npm run preview` | Serve o build local |
-| `npm run lint` | Lint com oxlint |
-| `npm run db:start` | Sobe um Supabase local em Docker |
-| `npm run db:reset` | Recria o banco local a partir das migrations |
-| `npm run smoke` | Roda as verificações de ponta a ponta |
-| `npm run seed` | Cria uma sala de demonstração já povoada |
-| `npm run seed ABC123` | Povoa uma sala existente com 4 participantes |
-| `npm run demo:consenso 13` | Deixa uma sala pronta para ver a comemoração |
+| `pnpm dev` | Sobe tudo que tem `dev` |
+| `pnpm build` | Build de todos os pacotes, na ordem das dependências |
+| `pnpm typecheck` | Checagem de tipos do monorepo |
+| `pnpm lint` | Lint com oxlint |
+| `pnpm db:start` | Sobe um Supabase local em Docker |
+| `pnpm db:reset` | Recria o banco local a partir das migrations |
+| `pnpm smoke` | Roda as verificações de ponta a ponta |
+| `pnpm seed` | Cria uma sala de demonstração já povoada |
+| `pnpm demo:consenso 13` | Deixa uma sala pronta para ver a comemoração |
 
 ## Estrutura
 
 ```
-src/
-  components/    peças de UI (mesa, baralho, resumo, primitivos)
-  hooks/         useAuth, useRoomState (realtime), useTheme
-  lib/           supabase, api (RPCs), derive (cálculos de resumo)
+apps/web/src/
+  components/    peças do produto (mesa, baralho, resumo)
+  hooks/         useAuth, useRoomState (realtime), useGameActions
+  lib/           supabase, api (RPCs), gameView, derive
   pages/         Landing, SprintSetup, JoinRoom, Game
   types/         modelo de domínio
-supabase/
-  migrations/    schema, RLS e funções
+
+packages/ds/src/
+  tokens/        o style guide, e a ponte para o shadcn
+  ui/            primitivos do registry — não editamos
+  atoms/         a fachada, e o que é nosso
+  molecules/     átomos que só fazem sentido juntos
+  organisms/     pedaços de tela com comportamento próprio
+
+packages/db/
+  supabase/migrations/   schema, RLS e funções
+  scripts/               smoke, seed, demo
+```
+
+## Design system
+
+Componentes do registry do **shadcn/ui** com base **React Aria**, em
+`packages/ds/src/ui/`, mantidos byte a byte como vieram — é o que deixa
+`shadcn add` e `shadcn diff` úteis. O ajuste fino acontece uma camada acima, em
+`atoms/`.
+
+O tema chega neles por tradução: `tokens/shadcn-bridge.css` mapeia os papéis que
+o shadcn espera (`--primary`, `--muted`, `--destructive`) para os tokens da
+marca. Mexer numa cor reflete na biblioteca inteira, porque nenhum componente
+tem valor escrito dentro.
+
+A vitrine roda em `apps/docs` com playground ao vivo:
+
+```bash
+pnpm --filter @pp/docs dev    # http://localhost:3100
 ```
 
 ## Sobre a reconstrução

@@ -1,0 +1,28 @@
+/* O style guide do produto, para o playground mostrar os componentes com as
+   cores e a tipografia de verdade. */
+@import '@pp/ds/styles.css';
+
+/* Onde o Tailwind procura classe para gerar. Sem isto ele não enxerga nem o
+   pacote do DS nem os exemplos escritos nos MDX. */
+@source '../../../../packages/ds/src';
+@source '../../docs';
+@source '../theme';
+
+/* A vitrine herda o tema do Docusaurus; os componentes do DS leem o atributo
+   data-theme, que é o mesmo nome que o Docusaurus usa. Feliz coincidência:
+   trocar o tema na navbar troca o tema dos exemplos junto. */
+
+:root {
+  --ifm-color-primary: #7c3aed;
+  --ifm-color-primary-dark: #6d28d9;
+  --ifm-color-primary-darker: #5b21b6;
+  --ifm-color-primary-light: #9670ff;
+  --ifm-font-family-base: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --ifm-heading-font-family: 'Outfit', system-ui, sans-serif;
+}
+
+/* O playground precisa de um fundo do produto, não do Docusaurus, senão os
+   componentes aparecem sobre uma cor que nunca vão encontrar na vida real. */
+.playgroundPreview_dsl_ {
+  background: var(--surface-base);
+}

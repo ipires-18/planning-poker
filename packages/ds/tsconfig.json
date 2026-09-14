@@ -1,0 +1,13 @@
+{
+  "extends": "@pp/tsconfig/react-lib.json",
+  "compilerOptions": {
+    // `src/ui` vem do registry do shadcn e fica byte a byte como veio — é o que
+    // mantém `shadcn diff` e `shadcn add` úteis. Alguns desses arquivos trazem
+    // import que não usam, e corrigir criaria divergência permanente com o
+    // upstream. O lint de variável não usada continua valendo em todo o resto
+    // do monorepo, onde o código é nosso.
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["src"]
+}

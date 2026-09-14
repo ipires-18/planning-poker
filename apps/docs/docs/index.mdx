@@ -1,0 +1,51 @@
+---
+title: Planning Poker DS
+slug: /
+sidebar_position: 0
+---
+
+# Design system do Planning Poker
+
+Tokens, átomos, moléculas e organismos sobre **React Aria**, distribuídos pelo
+registry do **shadcn/ui**.
+
+Tudo nesta vitrine é o componente de verdade, importado do `@pp/ds` pelo
+workspace — não uma cópia. Se um átomo mudar, esta página muda junto, que é a
+única forma de a documentação não envelhecer sozinha.
+
+```jsx live
+function Amostra() {
+  return (
+    <Card style={{ padding: 24, display: 'grid', gap: 20, maxWidth: 380 }}>
+      <Field label="Nome da sprint" hint="Você entra como Product Owner">
+        <Input placeholder="Sprint 42" />
+      </Field>
+
+      <div style={{ display: 'grid', gap: 10 }}>
+        <PersonChip name="Ana" role="Front" accent={ROLE_ACCENT.frontend} />
+        <PersonChip name="Bruno" role="Back" accent={ROLE_ACCENT.backend} meta="falta 2d" />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        <StatBlock value={9} label="dias úteis" />
+        <StatBlock value={3} label="na fila" />
+        <StatBlock value={32} label="pontos" highlight />
+      </div>
+
+      <div style={{ display: 'flex', gap: 10 }}>
+        <Button variant="ghost">Voltar</Button>
+        <Button variant="joy" style={{ flex: 1 }}>Criar sessão</Button>
+      </div>
+    </Card>
+  )
+}
+```
+
+Edite o código acima: o playground executa na hora.
+
+## Por onde começar
+
+- **[Style guide](/fundamentos/style-guide)** — cor, tipografia, grid e movimento
+- **[Arquitetura](/fundamentos/arquitetura)** — como as camadas se encaixam e por
+  que `ui/` não se toca
+- **[Átomos](/componentes/atomos)** — a menor peça que faz sentido sozinha

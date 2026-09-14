@@ -1,0 +1,61 @@
+---
+title: Moléculas
+sidebar_position: 2
+---
+
+# Moléculas
+
+Dois ou mais átomos que só fazem sentido juntos. Compõem átomos, não compõem
+outra molécula, e resolvem uma tarefa pequena e reconhecível.
+
+## Field
+
+Rótulo, controle e dica, na ordem e com o espaçamento do style guide. Existe
+porque a alternativa é cada tela repetir a mesma marcação — e foi assim que o
+projeto teve, ao mesmo tempo, rótulos em três tamanhos diferentes.
+
+```jsx live
+<div style={{ display: 'grid', gap: 20, maxWidth: 340 }}>
+  <Field label="Nome da sprint">
+    <Input placeholder="Sprint 42" />
+  </Field>
+
+  <Field label="Seu nome" hint="Você entra como Product Owner">
+    <Input placeholder="Como o time te chama" />
+  </Field>
+
+  <Field label="Código da sala" error="Não achamos essa sala. Confira o código.">
+    <Input defaultValue="ABC123" />
+  </Field>
+</div>
+```
+
+## PersonChip
+
+Quem é a pessoa, em uma linha. Aparece na mesa, no placar, na divisão de pontos
+e no resumo — ter uma peça só é o que garante que a mesma pessoa se pareça
+consigo mesma em todas.
+
+```jsx live
+<div style={{ display: 'grid', gap: 14 }}>
+  <PersonChip name="Ana" role="Front" accent={ROLE_ACCENT.frontend} />
+  <PersonChip name="Bruno" role="Back" accent={ROLE_ACCENT.backend} meta="falta 2d" />
+  <PersonChip name="Carla" role="QA" accent={ROLE_ACCENT.qa} meta="não pontua" />
+  <PersonChip name="Diego" role="Lead" accent={ROLE_ACCENT.tech_lead} meta="ausente" dimmed />
+  <PersonChip name="Iago" role="PO" accent={ROLE_ACCENT.po} size="sm" />
+</div>
+```
+
+## StatBlock
+
+Um número grande com um rótulo embaixo. Repetido em dias úteis, pontos
+distribuídos e histórias na fila — sem uma peça comum, cada tela escolhia um
+corpo de fonte diferente para o mesmo tipo de informação.
+
+```jsx live
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+  <StatBlock value={1} label="pontuada" />
+  <StatBlock value={2} label="na fila" />
+  <StatBlock value={8} label="pontos" highlight />
+</div>
+```

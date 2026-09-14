@@ -1,0 +1,63 @@
+---
+title: Arquitetura
+sidebar_position: 2
+---
+
+# Arquitetura do design system
+
+## Onde cada coisa mora
+
+```
+packages/ds/src/
+├── tokens/          o style guide, e a ponte para o shadcn
+├── ui/              primitivos vindos do registry — não editamos
+├── atoms/           a fachada, e o que é nosso
+├── molecules/       átomos que só fazem sentido juntos
+├── organisms/       pedaços de tela com comportamento próprio
+└── lib/             cn(), e o que for utilitário
+```
+
+## Por que `ui/` não se toca
+
+Os componentes em `src/ui/` vêm do registry do shadcn com base **React Aria**, e
+ficam byte a byte como vieram. É o que mantém `shadcn add` e `shadcn diff` úteis:
+dá para trazer um componente novo, ou ver o que mudou no upstream, sem resolver
+conflito com customização nossa.
+
+O ajuste fino acontece uma camada acima. O `Button` do produto, por exemplo,
+vive em `atoms/button.tsx`, herda do primitivo e acrescenta o que é nosso: a
+variante `joy` com o degradê da marca, e uma escala de tamanho mais generosa —
+a do registry tem 32px de altura no padrão, e a mesa é tocada por gente no
+celular.
+
+## Como o tema chega nos componentes
+
+Os componentes do shadcn não conhecem a nossa marca. Eles falam em papéis —
+`primary`, `muted`, `destructive`, `ring` — e esperam que o tema diga quanto
+cada papel vale. Essa tradução é o `tokens/shadcn-bridge.css`:
+
+```css
+--primary: var(--color-brand-500);
+--muted: var(--surface-sunken);
+--destructive: var(--color-coral);
+```
+
+Mexer numa cor da marca reflete em todo componente do registry de uma vez,
+porque nenhum deles tem valor escrito dentro.
+
+## Os níveis do Atomic Design
+
+| Nível | Regra para estar ali | Exemplos |
+|---|---|---|
+| **Átomo** | Não depende de nenhum outro componente do DS | `Button`, `Input`, `Card`, `Spinner`, `Initials` |
+| **Molécula** | Compõe átomos, resolve uma tarefa pequena | `Field`, `PersonChip`, `StatBlock` |
+| **Organismo** | Compõe moléculas, tem comportamento não trivial | `Modal` |
+
+Templates e páginas ficam no app, não no DS: eles conhecem o domínio (sprint,
+história, voto), e o DS não deve conhecer.
+
+Uma honestidade sobre a classificação: alguns componentes do registry, como
+`dialog`, são organismos pela régua do Atomic Design mas chegam como arquivo
+único em `ui/`. Em vez de fatiar o que veio de fora — o que quebraria o
+`shadcn diff` —, a classificação vale para a nossa camada, e `ui/` é tratado
+como o fornecedor que é.

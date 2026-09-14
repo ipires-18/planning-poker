@@ -1,0 +1,12 @@
+{
+  "extends": "@pp/tsconfig/vite-app.json",
+  "compilerOptions": {
+    "paths": { "@/*": ["./src/*"] },
+    // O app compila o @pp/ds a partir do fonte, e `src/ui` de lá vem do
+    // registry do shadcn — fica byte a byte como veio, para `shadcn diff`
+    // seguir útil. Alguns desses arquivos trazem import que não usam.
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["src", "vite.config.ts"]
+}

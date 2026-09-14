@@ -1,0 +1,12 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# O pnpm bloqueia script de build por padrão, o que é bom. Esta lista é a
+# exceção explícita e auditável: os pacotes que precisam compilar binário
+# para funcionar.
+allowBuilds:
+  '@swc/core': true
+  core-js: true
+  esbuild: true
+  supabase: true

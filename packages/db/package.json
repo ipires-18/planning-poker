@@ -1,0 +1,21 @@
+{
+  "name": "@pp/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Schema, RLS e funções do Planning Poker, mais os scripts que falam com o banco.",
+  "type": "module",
+  "scripts": {
+    "start": "supabase start",
+    "stop": "supabase stop",
+    "reset": "supabase db reset",
+    "smoke": "node scripts/smoke.mjs",
+    "seed": "node scripts/seed-room.mjs",
+    "demo:consenso": "node scripts/demo-consenso.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0"
+  },
+  "devDependencies": {
+    "supabase": "^2.34.3"
+  }
+}

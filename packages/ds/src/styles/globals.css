@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+/* O style guide primeiro: é dele que tudo deriva. */
+@import '../tokens/index.css';
+/* Depois a tradução para os papéis que o shadcn espera encontrar. */
+@import '../tokens/shadcn-bridge.css';
+
+@layer base {
+  * {
+    border-color: var(--surface-border);
+  }
+
+  body {
+    background-color: var(--surface-base);
+    color: var(--text-strong);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: var(--tracking-tight);
+  }
+}

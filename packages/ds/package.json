@@ -1,0 +1,48 @@
+{
+  "name": "@pp/ds",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Design system do Planning Poker: tokens, \u00e1tomos, mol\u00e9culas e organismos sobre React Aria.",
+  "type": "module",
+  "imports": {
+    "#ui/*": "./src/ui/*.tsx",
+    "#atoms/*": "./src/atoms/*.tsx",
+    "#molecules/*": "./src/molecules/*.tsx",
+    "#organisms/*": "./src/organisms/*.tsx",
+    "#lib/*": "./src/lib/*.ts",
+    "#hooks/*": "./src/hooks/*.ts"
+  },
+  "exports": {
+    "./styles.css": "./src/styles/globals.css",
+    "./tokens.css": "./src/tokens/index.css",
+    "./ui/*": "./src/ui/*.tsx",
+    "./atoms": "./src/atoms/index.ts",
+    "./molecules": "./src/molecules/index.ts",
+    "./organisms": "./src/organisms/index.ts",
+    "./tokens": "./src/tokens/index.ts",
+    "./lib/*": "./src/lib/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.545.0",
+    "react-aria-components": "^1.14.0",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@pp/tsconfig": "workspace:*",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "oxlint": "^1.81.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

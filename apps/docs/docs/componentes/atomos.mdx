@@ -1,0 +1,105 @@
+---
+title: Átomos
+sidebar_position: 1
+---
+
+# Átomos
+
+A menor peça que ainda faz sentido sozinha. Não depende de nenhum outro
+componente do DS.
+
+## Button
+
+React Aria por baixo — então o `disabled` do HTML aqui se chama **`isDisabled`**,
+e o clique responde a teclado e toque sem nada extra.
+
+```jsx live
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+  <Button variant="joy">Criar sessão</Button>
+  <Button variant="primary">Revelar</Button>
+  <Button variant="secondary">Adicionar</Button>
+  <Button variant="ghost">Voltar</Button>
+  <Button variant="danger">Encerrar</Button>
+  <Button isDisabled>Indisponível</Button>
+</div>
+```
+
+`joy` é a única variante que o registry não tem: o degradê da marca, reservado
+para a ação principal de uma tela.
+
+### Tamanhos
+
+```jsx live
+<div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+  <Button size="sm">Pequeno</Button>
+  <Button size="md">Médio</Button>
+  <Button size="lg">Grande</Button>
+</div>
+```
+
+## Input
+
+```jsx live
+<div style={{ display: 'grid', gap: 12, maxWidth: 320 }}>
+  <Input placeholder="Como o time te chama" />
+  <Input placeholder="Código da sala" defaultValue="AQV3SZ" />
+</div>
+```
+
+## Checkbox
+
+```jsx live
+<div style={{ display: 'grid', gap: 10 }}>
+  <Checkbox>A QA vota nesta sessão</Checkbox>
+  <Checkbox defaultSelected>Carnaval</Checkbox>
+  <Checkbox isDisabled>Indisponível</Checkbox>
+</div>
+```
+
+## Card
+
+A superfície elevada do produto. Existe como átomo porque o brilho colorido
+(`--glow`) é assinatura da marca e não pode ser recriado na mão em cada tela.
+
+```jsx live
+<Card style={{ padding: 24, maxWidth: 340 }}>
+  <strong>Sprint 42</strong>
+  <p style={{ margin: '8px 0 0', opacity: 0.7 }}>3 histórias na fila</p>
+</Card>
+```
+
+## Initials
+
+A inicial de quem não tem foto, num degradê da cor do papel. Fica ao lado do
+`Avatar` do registry em vez de dentro dele: aqui nunca há imagem, porque o
+produto não pede foto a ninguém.
+
+```jsx live
+<div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+  <Initials name="Ana" color={ROLE_ACCENT.frontend} size={48} />
+  <Initials name="Bruno" color={ROLE_ACCENT.backend} size={40} />
+  <Initials name="Carla" color={ROLE_ACCENT.qa} size={32} />
+  <Initials name="Diego" color={ROLE_ACCENT.tech_lead} size={32} dimmed />
+</div>
+```
+
+## Spinner
+
+Três bolinhas subindo em sequência. Não é um spinner de biblioteca de propósito:
+o produto é lúdico, e um círculo girando cinza destoaria de tudo ao redor.
+
+```jsx live
+<Spinner label="Entrando na mesa..." />
+```
+
+## Badge e Separator
+
+```jsx live
+<div style={{ display: 'grid', gap: 16 }}>
+  <div style={{ display: 'flex', gap: 8 }}>
+    <Badge>Front & Back</Badge>
+    <Badge variant="secondary">Pontuada</Badge>
+  </div>
+  <Separator />
+</div>
+```

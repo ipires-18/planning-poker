@@ -1,0 +1,138 @@
+/* ============================================================================
+   Ponte: style guide → tokens semânticos do shadcn
+   ============================================================================
+
+   Os componentes do shadcn não conhecem a nossa marca. Eles falam em papéis —
+   `primary`, `muted`, `destructive`, `ring` — e esperam que o tema diga o que
+   cada papel vale. Este arquivo é essa tradução.
+
+   É o que permite rodar `shadcn add` e `shadcn diff` sem medo: os componentes
+   em `src/ui/` ficam exatamente como vieram do registry, e continuam
+   atualizáveis. Quem manda na aparência é o style guide, daqui.
+
+   Mexer numa cor da marca reflete em todo componente do shadcn de uma vez,
+   porque nenhum deles tem valor escrito dentro.
+   ============================================================================ */
+
+:root {
+  /* Raio base do shadcn. Ele deriva sm/md/lg/xl daqui por cálculo, então um
+     único número afina o arredondamento da biblioteca inteira. */
+  --radius: 1rem;
+
+  /* Superfícies ------------------------------------------------------------ */
+  --background: var(--surface-base);
+  --foreground: var(--text-strong);
+
+  --card: var(--surface-raised);
+  --card-foreground: var(--text-strong);
+
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--text-strong);
+
+  /* Ação -------------------------------------------------------------------
+     `primary` é a cor de quem age. No claro usamos a 500 cheia; o texto por
+     cima é branco, e não o token de tinta, porque o contraste precisa valer
+     nos dois temas. */
+  --primary: var(--color-brand-500);
+  --primary-foreground: #ffffff;
+
+  /* `secondary` é a ação de menor peso: o poço, com tinta normal em cima. */
+  --secondary: var(--surface-sunken);
+  --secondary-foreground: var(--text-strong);
+
+  /* `muted` é fundo de apoio; seu foreground é o nosso texto secundário. */
+  --muted: var(--surface-sunken);
+  --muted-foreground: var(--text-muted);
+
+  /* `accent` é o realce de hover e de item selecionado. */
+  --accent: var(--surface-sunken);
+  --accent-foreground: var(--color-brand-500);
+
+  /* Destrutivo ------------------------------------------------------------- */
+  --destructive: var(--color-coral);
+  --destructive-foreground: #ffffff;
+
+  /* Traço e foco ----------------------------------------------------------- */
+  --border: var(--surface-border);
+  --input: var(--surface-border);
+  --ring: var(--color-brand-400);
+
+  /* Gráficos — a mesma paleta de papéis, para que um gráfico no produto não
+     apareça com cores que o resto da interface nunca usa. */
+  --chart-1: var(--color-brand-500);
+  --chart-2: var(--color-sky);
+  --chart-3: var(--color-mint);
+  --chart-4: var(--color-zest);
+  --chart-5: var(--color-punch);
+
+  /* Barra lateral ---------------------------------------------------------- */
+  --sidebar: var(--surface-raised);
+  --sidebar-foreground: var(--text-strong);
+  --sidebar-primary: var(--color-brand-500);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--surface-sunken);
+  --sidebar-accent-foreground: var(--color-brand-500);
+  --sidebar-border: var(--surface-border);
+  --sidebar-ring: var(--color-brand-400);
+}
+
+/* No escuro quase tudo se resolve sozinho, porque as superfícies já trocaram
+   de valor no style guide. Só a cor de ação precisa subir um degrau: a 500
+   cheia some contra o violeta profundo do fundo. */
+:root[data-theme='dark'] {
+  --primary: var(--color-brand-400);
+  --primary-foreground: var(--color-brand-950);
+  --accent-foreground: var(--color-brand-300);
+  --sidebar-primary: var(--color-brand-400);
+  --sidebar-primary-foreground: var(--color-brand-950);
+}
+
+/* O shadcn escreve `dark:` nos componentes, e a variante padrão dele procura a
+   classe `.dark`. O nosso tema mora num atributo — esta linha faz as duas
+   convenções apontarem para o mesmo lugar. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Devolve as variáveis para o Tailwind como cores e raios de verdade, para que
+   `bg-primary`, `text-muted-foreground` e `rounded-md` existam nas classes. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
