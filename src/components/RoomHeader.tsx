@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Button, cx } from './ui'
+import { CapacityMeter } from './CapacityPanel'
+import type { TeamCapacity } from '@/lib/derive'
 
 interface Props {
   sessionName: string
@@ -12,6 +14,8 @@ interface Props {
   onReveal: () => void
   onAddStory: () => void
   onEndGame: () => void
+  capacity: TeamCapacity
+  onOpenCapacity?: () => void
 }
 
 export function RoomHeader({
@@ -25,6 +29,8 @@ export function RoomHeader({
   onReveal,
   onAddStory,
   onEndGame,
+  capacity,
+  onOpenCapacity,
 }: Props) {
   const [copied, setCopied] = useState(false)
 
@@ -69,6 +75,10 @@ export function RoomHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* O quanto o time já assumiu fica sempre à vista, ao lado das ações
+              que fazem esse número subir. */}
+          <CapacityMeter capacity={capacity} onClick={onOpenCapacity} />
+
           <button
             onClick={onToggleTheme}
             aria-label={theme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'}

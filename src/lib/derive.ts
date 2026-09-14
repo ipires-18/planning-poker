@@ -1,3 +1,4 @@
+import { windowStats, type WindowStats } from './holidays'
 import type { Player, RoomState, Story, StoryParticipant, VotingSide } from '@/types'
 
 export interface ScoredStory {
@@ -80,4 +81,72 @@ export function summaryAsText(summaries: PlayerSummary[]): string {
       return [`${row.player.name} ${row.total}`, ...lines].join('\n')
     })
     .join('\n\n')
+}
+
+/* -------------------------------------------------------------------------- */
+/* Capacidade                                                                  */
+/* -------------------------------------------------------------------------- */
+
+
+export interface CapacityRow {
+  player: Player
+  /** Dias úteis da sprint menos as ausências desta pessoa. */
+  availableDays: number
+  capacity: number
+  committed: number
+  /** Positivo = ainda cabe; negativo = passou do que ela assume. */
+  slack: number
+}
+
+export interface TeamCapacity {
+  window: WindowStats
+  rows: CapacityRow[]
+  capacity: number
+  committed: number
+  slack: number
+  /** 0 a 1+ — quanto da capacidade já foi comprometido. */
+  ratio: number
+  /** Ninguém definiu capacidade ainda: o cabeçalho mostra só o total. */
+  unset: boolean
+}
+
+export function teamCapacity(state: RoomState): TeamCapacity {
+  const stats = windowStats({
+    start: state.room.sprint_start,
+    days: state.room.sprint_days,
+    holidays: state.room.holidays ?? [],
+  })
+
+  const rows: CapacityRow[] = scorersOf(state.players).map((player) => {
+    const capacity = Number(player.capacity_points)
+    const committed = Number(player.accumulated_points)
+    return {
+      player,
+      availableDays: Math.max(0, stats.workingDays - player.days_off),
+      capacity,
+      committed,
+      slack: capacity - committed,
+    }
+  })
+
+  const capacity = rows.reduce((sum, r) => sum + r.capacity, 0)
+  const committed = rows.reduce((sum, r) => sum + r.committed, 0)
+
+  return {
+    window: stats,
+    rows,
+    capacity,
+    committed,
+    slack: capacity - committed,
+    ratio: capacity > 0 ? committed / capacity : 0,
+    unset: capacity === 0,
+  }
+}
+
+/**
+ * Sugestão de capacidade a partir de um ritmo em pontos por dia. Arredonda em
+ * meios pontos, que é a menor fração que o time usa na divisão.
+ */
+export function suggestCapacity(availableDays: number, pointsPerDay: number): number {
+  return Math.round(availableDays * pointsPerDay * 2) / 2
 }

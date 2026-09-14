@@ -115,11 +115,13 @@ export function Modal({
   onClose,
   title,
   children,
+  size = 'md',
 }: {
   open: boolean
   onClose: () => void
   title: string
   children: ReactNode
+  size?: 'md' | 'lg'
 }) {
   useEffect(() => {
     if (!open) return
@@ -143,7 +145,11 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="card-surface animate-pop-in w-full max-w-lg p-7"
+        className={cx(
+          'card-surface animate-pop-in w-full p-7',
+          // Painéis com tabela precisam de mais largura, senão os nomes somem.
+          size === 'lg' ? 'max-h-[92vh] max-w-3xl overflow-y-auto' : 'max-w-lg',
+        )}
       >
         <h2 className="mb-6 text-2xl font-black text-ink">{title}</h2>
         {children}

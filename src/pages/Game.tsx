@@ -9,12 +9,13 @@ import { ResultsPanel } from '@/components/ResultsPanel'
 import { SprintSummary } from '@/components/SprintSummary'
 import { SprintProgress, StoryStage } from '@/components/StoryStage'
 import { StoryEditor, StoryQueue, type QueueItem, type StoryEdit } from '@/components/StoryQueue'
+import { CapacityPanel } from '@/components/CapacityPanel'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
 import { useRoomState } from '@/hooks/useRoomState'
 import * as api from '@/lib/api'
-import { averageStorySeconds, scorersOf, sprintIsComplete, summarize } from '@/lib/derive'
-import { ROLE_ACCENT, type Allocation, type VotingSide } from '@/types'
+import { averageStorySeconds, scorersOf, sprintIsComplete, summarize, teamCapacity } from '@/lib/derive'
+import { ROLE_ACCENT, type Allocation, type CapacityEntry, type VotingSide } from '@/types'
 
 export default function Game() {
   const { roomId = '' } = useParams()
@@ -26,6 +27,7 @@ export default function Game() {
   const [actionError, setActionError] = useState('')
   const [storiesOpen, setStoriesOpen] = useState(false)
   const [addingStory, setAddingStory] = useState(false)
+  const [capacityOpen, setCapacityOpen] = useState(false)
 
   const me = state?.players.find((p) => p.user_id === userId) ?? null
 
@@ -54,6 +56,14 @@ export default function Game() {
   const scorers = useMemo(() => (state ? scorersOf(state.players) : []), [state])
   const observers = useMemo(
     () => state?.players.filter((p) => p.role === 'po') ?? [],
+    [state],
+  )
+
+  const capacity = useMemo(
+    () =>
+      state
+        ? teamCapacity(state)
+        : null,
     [state],
   )
 
@@ -171,6 +181,25 @@ export default function Game() {
     })
   }
 
+  const saveSprintWindow = async (next: {
+    start: string
+    days: number
+    holidays: import('@/lib/holidays').Holiday[]
+  }) => {
+    await run(async () => {
+      await api.setSprintWindow(roomId, next)
+      await refresh()
+    })
+  }
+
+  const saveCapacity = async (entries: CapacityEntry[]) => {
+    await run(async () => {
+      await api.setTeamCapacity(roomId, entries)
+      await refresh()
+      setCapacityOpen(false)
+    })
+  }
+
   const endGame = () => {
     if (!window.confirm('Encerrar a sessão para todo mundo?')) return
     void run(() => api.endGame(roomId))
@@ -223,6 +252,8 @@ export default function Game() {
         onReveal={() => void run(() => api.revealRound(roomId))}
         onAddStory={() => setStoriesOpen(true)}
         onEndGame={endGame}
+        capacity={capacity!}
+        onOpenCapacity={isHost ? () => setCapacityOpen(true) : undefined}
       />
 
       {actionError && (
@@ -232,7 +263,7 @@ export default function Game() {
       )}
 
       <div className="flex flex-1">
-        <Roster summaries={summaries} online={online} youId={userId} />
+        <Roster summaries={summaries} capacity={capacity!} online={online} youId={userId} />
 
         <main className="flex min-w-0 flex-1 flex-col">
           {complete ? (
@@ -386,6 +417,26 @@ export default function Game() {
             </Button>
           )}
         </div>
+      </Modal>
+
+      <Modal
+        open={capacityOpen}
+        onClose={() => setCapacityOpen(false)}
+        title="Capacidade do time"
+        size="lg"
+      >
+        {capacity && (
+          <CapacityPanel
+            capacity={capacity}
+            sprint={{
+              start: state.room.sprint_start,
+              days: state.room.sprint_days,
+              holidays: state.room.holidays ?? [],
+            }}
+            onSaveWindow={saveSprintWindow}
+            onSaveCapacity={saveCapacity}
+          />
+        )}
       </Modal>
     </div>
   )

@@ -29,6 +29,10 @@ não pela interface.
 - **Presença ao vivo** — quem fechou a aba aparece como ausente e não trava mais
   o contador de votos.
 - **Resumo final** copiável em texto plano, com correção manual de pontos.
+- **Capacidade do time**: janela de sprint (1 a 4 semanas ou 15 dias), feriados
+  nacionais calculados automaticamente, ausências por pessoa e quantos pontos
+  cada um assume. O cabeçalho mostra o comprometido contra a capacidade, e muda
+  de cor quando o time passa do que cabe.
 - **Tema claro e escuro.**
 
 ## Duas decisões que valem explicar
@@ -42,6 +46,17 @@ as pessoas.
 pendente; as encerradas ficam onde estão, senão o resumo da sessão passaria a
 contar outra coisa. Excluir uma história já pontuada é permitido — o PO pode ter
 errado — mas os pontos voltam de quem os recebeu, na mesma transação.
+
+**Feriados calculados, não buscados.** Os feriados nacionais — inclusive os
+móveis, via algoritmo da Páscoa — são computados no cliente. Funcionam offline e
+não dependem de um serviço de terceiros continuar no ar. Carnaval e Corpus
+Christi vêm marcados como ponto facultativo, que é o que de fato são, e o time
+desmarca se trabalha. O que ele escolheu fica salvo na sala, então todo mundo vê
+a mesma contagem.
+
+**Dias úteis não são guardados.** Saem da janela toda vez que alguém os lê.
+Guardar um número derivado é convite para ele ficar desatualizado quando o PO
+mexer nos feriados.
 
 ## Como a segurança funciona
 

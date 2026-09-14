@@ -435,6 +435,101 @@ check(
   roomDRow.point_scale.some((c) => c.value === 0.5),
 )
 
+/* ------------------------------------------------------------ capacidade --- */
+console.log('\nCapacidade do time')
+
+const HOLIDAYS = [
+  { date: '2026-04-21', name: 'Tiradentes' },
+  { date: '2026-05-01', name: 'Dia do Trabalho' },
+]
+
+const { data: roomE, error: capRoomError } = await po.client.rpc('create_room', {
+  p_session_name: 'Sprint com capacidade',
+  p_host_name: 'Iago (PO)',
+  p_stories: [{ title: 'Alguma coisa', link: null, kind: 'frontend' }],
+  p_sprint_start: '2026-04-20',
+  p_sprint_days: 15,
+  p_holidays: HOLIDAYS,
+})
+check('cria sala com janela de sprint', !capRoomError, capRoomError?.message)
+
+const { data: roomERow } = await po.client.from('rooms').select('*').eq('id', roomE).single()
+check(
+  'janela gravada (início, duração e feriados)',
+  roomERow.sprint_start === '2026-04-20' && roomERow.sprint_days === 15 && roomERow.holidays.length === 2,
+  `${roomERow.sprint_start} / ${roomERow.sprint_days} / ${roomERow.holidays.length}`,
+)
+
+const anaE = await ana.client.rpc('join_room', { p_room_id: roomE, p_name: 'Ana', p_role: 'frontend' })
+const brunoE = await bruno.client.rpc('join_room', { p_room_id: roomE, p_name: 'Bruno', p_role: 'backend' })
+
+const { error: capError } = await po.client.rpc('set_team_capacity', {
+  p_room_id: roomE,
+  p_entries: [
+    { player_id: anaE.data, capacity_points: 12, days_off: 2 },
+    { player_id: brunoE.data, capacity_points: 8, days_off: 0 },
+  ],
+})
+check('PO define a capacidade de cada pessoa', !capError, capError?.message)
+
+const { data: playersE } = await po.client.from('players').select('*').eq('room_id', roomE)
+const anaCapRow = playersE.find((p) => p.name === 'Ana')
+check(
+  'capacidade e ausências gravadas',
+  Number(anaCapRow.capacity_points) === 12 && anaCapRow.days_off === 2,
+  `${anaCapRow.capacity_points} pts / ${anaCapRow.days_off} dias`,
+)
+
+// Editável a qualquer momento.
+await po.client.rpc('set_team_capacity', {
+  p_room_id: roomE,
+  p_entries: [{ player_id: anaE.data, capacity_points: 15, days_off: 0 }],
+})
+const { data: anaUpdated } = await po.client.from('players').select('*').eq('id', anaE.data).single()
+check('capacidade continua editável depois', Number(anaUpdated.capacity_points) === 15)
+
+const { error: anaCapacity } = await ana.client.rpc('set_team_capacity', {
+  p_room_id: roomE,
+  p_entries: [{ player_id: anaE.data, capacity_points: 999, days_off: 0 }],
+})
+check('participante comum não define capacidade', Boolean(anaCapacity))
+
+const { error: negativeCap } = await po.client.rpc('set_team_capacity', {
+  p_room_id: roomE,
+  p_entries: [{ player_id: anaE.data, capacity_points: -5, days_off: 0 }],
+})
+check('capacidade negativa é recusada', Boolean(negativeCap))
+
+// Uma pessoa de outra sala não pode ser afetada daqui.
+const { data: anaRoomB } = await po.client.from('players').select('id, capacity_points').eq('room_id', roomB).eq('name', 'Ana').maybeSingle()
+if (anaRoomB) {
+  await po.client.rpc('set_team_capacity', {
+    p_room_id: roomE,
+    p_entries: [{ player_id: anaRoomB.id, capacity_points: 99, days_off: 0 }],
+  })
+  const { data: untouched } = await po.client.from('players').select('capacity_points').eq('id', anaRoomB.id).single()
+  check(
+    'não dá para mexer na capacidade de quem está em outra sala',
+    Number(untouched.capacity_points) !== 99,
+    `virou ${untouched.capacity_points}`,
+  )
+}
+
+const { error: windowError } = await po.client.rpc('set_sprint_window', {
+  p_room_id: roomE, p_start: '2026-06-01', p_days: 7, p_holidays: [],
+})
+check('PO ajusta a janela durante a sessão', !windowError, windowError?.message)
+
+const { error: anaWindow } = await ana.client.rpc('set_sprint_window', {
+  p_room_id: roomE, p_start: '2026-06-01', p_days: 7, p_holidays: [],
+})
+check('participante comum não ajusta a janela', Boolean(anaWindow))
+
+const { error: longSprint } = await po.client.rpc('set_sprint_window', {
+  p_room_id: roomE, p_start: '2026-06-01', p_days: 200, p_holidays: [],
+})
+check('sprint absurdamente longa é recusada', Boolean(longSprint))
+
 /* ------------------------------------------------------------- encerrar --- */
 console.log('\nEncerramento')
 const { error: anaEnd } = await ana.client.rpc('end_game', { p_room_id: roomId })

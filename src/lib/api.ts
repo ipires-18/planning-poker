@@ -1,8 +1,10 @@
 import { supabase } from './supabase'
 import type {
   Allocation,
+  CapacityEntry,
   Card,
   DeckId,
+  Holiday,
   Player,
   PlayerRole,
   Room,
@@ -31,12 +33,19 @@ export interface DraftStory {
   kind: StoryKind
 }
 
+export interface SprintWindowInput {
+  start: string
+  days: number
+  holidays: Holiday[]
+}
+
 export async function createRoom(
   sessionName: string,
   hostName: string,
   stories: DraftStory[],
   deckId: DeckId,
   pointScale: Card[],
+  sprint: SprintWindowInput,
 ): Promise<string> {
   const { data, error } = await supabase.rpc('create_room', {
     p_session_name: sessionName,
@@ -44,9 +53,31 @@ export async function createRoom(
     p_stories: stories.map((s) => ({ title: s.title, link: s.link ?? null, kind: s.kind })),
     p_deck_id: deckId,
     p_point_scale: pointScale,
+    p_sprint_start: sprint.start,
+    p_sprint_days: sprint.days,
+    p_holidays: sprint.holidays,
   })
   fail(error)
   return data as string
+}
+
+export async function setSprintWindow(roomId: string, sprint: SprintWindowInput) {
+  fail(
+    (
+      await supabase.rpc('set_sprint_window', {
+        p_room_id: roomId,
+        p_start: sprint.start,
+        p_days: sprint.days,
+        p_holidays: sprint.holidays,
+      })
+    ).error,
+  )
+}
+
+export async function setTeamCapacity(roomId: string, entries: CapacityEntry[]) {
+  fail(
+    (await supabase.rpc('set_team_capacity', { p_room_id: roomId, p_entries: entries })).error,
+  )
 }
 
 export async function roomExists(roomId: string): Promise<boolean> {

@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, ErrorNote, Field, Input, Select } from '@/components/ui'
 import { DeckPicker } from '@/components/DeckPicker'
+import { SprintWindowPicker } from '@/components/SprintWindowPicker'
 import { StoryQueue, type QueueItem, type StoryEdit } from '@/components/StoryQueue'
 import { createRoom } from '@/lib/api'
 import { DEFAULT_DECK, deckScale, type Card, type DeckId } from '@/lib/decks'
+import { holidaysInWindow, nextMonday, type Holiday } from '@/lib/holidays'
 import { KIND_LABEL, type StoryKind } from '@/types'
 
 interface Draft extends QueueItem {
@@ -19,6 +21,15 @@ export default function SprintSetup() {
 
   const [deckId, setDeckId] = useState<DeckId>(DEFAULT_DECK)
   const [scale, setScale] = useState<Card[]>(() => deckScale(DEFAULT_DECK))
+
+  // Duas semanas a partir da próxima segunda é o começo de sprint mais comum;
+  // os feriados nacionais dessa janela já vêm marcados.
+  const [sprint, setSprint] = useState<{ start: string; days: number; holidays: Holiday[] }>(
+    () => {
+      const start = nextMonday()
+      return { start, days: 14, holidays: holidaysInWindow(start, 14) }
+    },
+  )
 
   const [title, setTitle] = useState('')
   const [link, setLink] = useState('')
@@ -84,6 +95,7 @@ export default function SprintSetup() {
         stories.map((s) => ({ title: s.title, link: s.link ?? undefined, kind: s.kind })),
         deckId,
         scale,
+        sprint,
       )
       navigate(`/sala/${roomId}`)
     } catch (e) {
@@ -149,6 +161,25 @@ export default function SprintSetup() {
               setDeckId(id)
               setScale(next)
             }}
+          />
+        </div>
+
+        {/* Janela da sprint */}
+        <div className="card-surface space-y-4 p-6">
+          <div>
+            <h2 className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
+              Janela da sprint
+            </h2>
+            <p className="mt-1 text-xs text-ink-subtle">
+              Os dias úteis daqui viram a base da capacidade do time. Dá para ajustar
+              depois, durante a sessão.
+            </p>
+          </div>
+          <SprintWindowPicker
+            start={sprint.start}
+            days={sprint.days}
+            holidays={sprint.holidays}
+            onChange={setSprint}
           />
         </div>
 

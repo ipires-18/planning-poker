@@ -1,6 +1,7 @@
 import type { Card, DeckId } from '@/lib/decks'
+import type { Holiday } from '@/lib/holidays'
 
-export type { Card, DeckId }
+export type { Card, DeckId, Holiday }
 
 export type PlayerRole = 'po' | 'tech_lead' | 'frontend' | 'backend' | 'qa'
 export type StoryKind = 'frontend' | 'backend' | 'both'
@@ -19,6 +20,10 @@ export interface Room {
   ended: boolean
   created_at: string
   expires_at: string
+  /** Janela da sprint — base para os dias úteis e a capacidade do time. */
+  sprint_start: string
+  sprint_days: number
+  holidays: Holiday[]
 }
 
 export interface Player {
@@ -29,6 +34,10 @@ export interface Player {
   role: PlayerRole
   accumulated_points: number
   has_voted: boolean
+  /** Quantos pontos esta pessoa assume na sprint. 0 = não definido. */
+  capacity_points: number
+  /** Dias em que ela não estará (férias, folga, outro time). */
+  days_off: number
   joined_at: string
 }
 
@@ -68,6 +77,13 @@ export interface StoryParticipant {
   side: VotingSide
   points: number
   pending: boolean
+}
+
+/** Capacidade enviada em lote pelo painel do time. */
+export interface CapacityEntry {
+  player_id: string
+  capacity_points: number
+  days_off: number
 }
 
 /** Alocação enviada ao confirmar a pontuação de uma história. */
