@@ -177,13 +177,26 @@ export function windowStats({ start, days, holidays }: SprintWindow): WindowStat
 }
 
 /** Durações comuns. O número é em dias corridos. */
+/**
+ * As durações do Scrum: de uma a quatro semanas, sempre em semanas fechadas.
+ *
+ * O guia não dá números redondos por acaso — sprint que começa e termina no
+ * mesmo dia da semana faz a cerimônia cair sempre no mesmo horário. Quem
+ * precisar de outra janela usa "Personalizada" e escolhe as duas pontas.
+ */
 export const SPRINT_PRESETS = [
   { days: 7, label: '1 semana' },
   { days: 14, label: '2 semanas' },
-  { days: 15, label: '15 dias' },
   { days: 21, label: '3 semanas' },
   { days: 28, label: '4 semanas' },
 ] as const
+
+/** Quantos dias a janela tem, contando as duas pontas. */
+export function daysBetween(startIso: string, endIso: string): number {
+  const start = fromISODate(startIso).getTime()
+  const end = fromISODate(endIso).getTime()
+  return Math.round((end - start) / 86_400_000) + 1
+}
 
 /** Segunda-feira mais próxima a partir de hoje — o começo de sprint usual. */
 export function nextMonday(from = new Date()): string {

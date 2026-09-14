@@ -1,6 +1,5 @@
-import { Avatar } from '../ui'
+import { Initials } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
-import { ROLE_ACCENT } from '@/types'
 import type { TallyEntry } from '@/lib/scoring'
 
 /** "Como o time votou": uma coluna por carta, com quem escolheu cada uma. */
@@ -32,7 +31,7 @@ export function VoteTally({ tally, consensus }: { tally: TallyEntry[]; consensus
             <div className="flex -space-x-2">
               {players.map((player) => (
                 <span key={player.id} title={player.name}>
-                  <Avatar name={player.name} color={ROLE_ACCENT[player.role]} size={26} />
+                  <Initials name={player.name} role={player.role} size="sm" />
                 </span>
               ))}
             </div>

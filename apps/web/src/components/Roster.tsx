@@ -1,13 +1,13 @@
-import { Avatar } from './ui'
+import { Initials, Progress } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
-import { ROLE_ACCENT, ROLE_LABEL, ROLE_SHORT, type Player } from '@/types'
+import { ROLE_LABEL, ROLE_SHORT, type Player } from '@/types'
 import { safeUrl } from '@/lib/links'
 import type { CapacityRow, PlayerSummary, TeamCapacity } from '@/lib/derive'
 
 interface Props {
   summaries: PlayerSummary[]
   capacity: TeamCapacity
-  /** Quem está na cerimônia sem carta — PO e, quando não vota, a QA. */
+  /** Quem está na cerimônia sem carta — o PO e o convidado sem baralho. */
   watchers: Player[]
   online: Set<string>
   youId: string | null
@@ -80,7 +80,6 @@ function ScorerRow({
   isYou: boolean
 }) {
   const { player, total, stories } = summary
-  const accent = ROLE_ACCENT[player.role]
 
   // O número sai do opcional uma vez, e é ele que decide se a barra aparece.
   // Um booleano `hasCapacity` solto não estreitaria `capacity` para o
@@ -98,16 +97,17 @@ function ScorerRow({
 
   return (
     <li
+      data-role={player.role}
       className={cx(
-        'rounded-2xl p-3 transition-colors',
-        isYou ? 'bg-brand-500/10' : 'hover:bg-[var(--surface-sunken)]',
+        'rounded-[var(--radius-card)] p-3 transition-colors',
+        isYou ? 'bg-brand-500/10' : 'hover:bg-sunken',
       )}
     >
       <div className="flex items-center gap-3">
         <span className="w-4 shrink-0 text-center font-mono text-xs font-black text-ink-subtle">
           {rank}
         </span>
-        <Avatar name={player.name} color={accent} size={34} dimmed={!isOnline} />
+        <Initials name={player.name} role={player.role} size="md" dimmed={!isOnline} />
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-ink">
@@ -115,8 +115,7 @@ function ScorerRow({
             {isYou && <span className="text-ink-subtle"> (você)</span>}
           </p>
           <span
-            className="block truncate text-[9px] font-black uppercase tracking-[0.1em]"
-            style={{ color: accent }}
+            className="block truncate text-[9px] font-black uppercase tracking-[0.1em] text-(--ds-accent)"
             title={isOnline ? undefined : 'Sem aba aberta agora'}
           >
             {meta}
@@ -132,11 +131,7 @@ function ScorerRow({
       </div>
 
       {occupancy !== null && (
-        <OccupancyBar
-          ratio={occupancy}
-          accent={accent}
-          label={`${total} de ${target} pontos`}
-        />
+        <OccupancyBar ratio={occupancy} label={`${total} de ${target} pontos`} />
       )}
 
       {stories.length > 0 && (
@@ -172,29 +167,17 @@ function ScorerRow({
   )
 }
 
-/** Cor do papel até 90% da capacidade, âmbar perto do teto, vermelho acima. */
-function OccupancyBar({
-  ratio,
-  accent,
-  label,
-}: {
-  ratio: number
-  accent: string
-  label: string
-}) {
-  const color = ratio > 1 ? 'var(--color-coral)' : ratio > 0.9 ? 'var(--color-zest)' : accent
+/**
+ * Quanto da capacidade da pessoa já foi comprometido.
+ *
+ * O aviso é por cor: acima de 90% o tom vira atenção, acima de 100% vira
+ * crítico — e a barra satura, porque passar do teto não deve fazer o traço
+ * vazar para fora do poço.
+ */
+function OccupancyBar({ ratio, label }: { ratio: number; label: string }) {
+  const tone = ratio > 1 ? 'critical' : ratio > 0.9 ? 'attention' : undefined
 
-  return (
-    <div
-      className="ml-7 mt-2 h-1 overflow-hidden rounded-full bg-[var(--surface-sunken)]"
-      title={label}
-    >
-      <div
-        className="h-full rounded-full transition-all duration-500"
-        style={{ width: `${Math.min(100, ratio * 100)}%`, backgroundColor: color }}
-      />
-    </div>
-  )
+  return <Progress value={ratio * 100} tone={tone} label={label} size="sm" className="ml-7 mt-2" />
 }
 
 function WatcherRow({
@@ -206,19 +189,17 @@ function WatcherRow({
   isOnline: boolean
   isYou: boolean
 }) {
-  const accent = ROLE_ACCENT[player.role]
 
   return (
-    <li className="flex items-center gap-3 px-3">
-      <Avatar name={player.name} color={accent} size={26} dimmed={!isOnline} />
+    <li data-role={player.role} className="flex items-center gap-3 px-3">
+      <Initials name={player.name} role={player.role} size="sm" dimmed={!isOnline} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-bold text-ink">
           {player.name}
           {isYou && <span className="text-ink-subtle"> (você)</span>}
         </p>
         <span
-          className="text-[9px] font-black uppercase tracking-[0.1em]"
-          style={{ color: accent }}
+          className="text-[9px] font-black uppercase tracking-[0.1em] text-(--ds-accent)"
           title={`${ROLE_LABEL[player.role]} — não recebe pontuação`}
         >
           {ROLE_SHORT[player.role]} · não pontua

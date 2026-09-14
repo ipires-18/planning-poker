@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import Landing from '@/pages/Landing'
 import { useAuth } from '@/hooks/useAuth'
-import { Button, ErrorNote, Spinner } from '@/components/ui'
+import { Button, Note, Spinner } from '@pp/ds/atoms'
 
 // A mesa carrega o painel de resultados, o resumo e o confete. Quem só abriu o
 // link para entrar numa sala não precisa baixar nada disso de imediato.
@@ -41,7 +41,7 @@ function SessionGate({ children }: { children: React.ReactNode }) {
             🔌
           </div>
           <h1 className="text-2xl font-black">Sem conexão com o servidor</h1>
-          <ErrorNote>{error}</ErrorNote>
+          <Note>{error}</Note>
           <Button className="w-full" onClick={() => window.location.reload()}>
             Tentar de novo
           </Button>
@@ -65,13 +65,17 @@ export default function App() {
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/" element={<Landing />} />
-            <Route path="/nova" element={<SprintSetup />} />
-            <Route path="/entrar/:roomId" element={<JoinRoom />} />
-            <Route path="/sala/:roomId" element={<Game />} />
-            {/* Links do app anterior continuam funcionando. */}
-            <Route path="/sprint-setup" element={<Navigate to="/nova" replace />} />
-            <Route path="/room/:roomId" element={<LegacyRedirect to="entrar" />} />
-            <Route path="/game/:roomId" element={<LegacyRedirect to="sala" />} />
+            <Route path="/new" element={<SprintSetup />} />
+            <Route path="/join/:roomId" element={<JoinRoom />} />
+            <Route path="/room/:roomId" element={<Game />} />
+            {/* Endereços antigos continuam funcionando: link de sala circula em
+                chat e calendário, e quebrar um deles é quebrar a cerimônia de
+                alguém. Redirecionam para o nome novo, sem sujar o histórico. */}
+            <Route path="/nova" element={<Navigate to="/new" replace />} />
+            <Route path="/sprint-setup" element={<Navigate to="/new" replace />} />
+            <Route path="/entrar/:roomId" element={<LegacyRedirect to="join" />} />
+            <Route path="/sala/:roomId" element={<LegacyRedirect to="room" />} />
+            <Route path="/game/:roomId" element={<LegacyRedirect to="room" />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

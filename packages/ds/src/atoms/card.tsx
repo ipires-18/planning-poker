@@ -1,4 +1,4 @@
-import { cn } from '#lib/utils'
+import { cn } from "#lib/utils";
 
 /**
  * A superfície elevada do produto.
@@ -10,15 +10,15 @@ import { cn } from '#lib/utils'
 export function Card({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+}: React.ComponentPropsWithoutRef<"div">) {
   return (
     <div
       data-slot="card"
       className={cn(
-        'rounded-[var(--radius-card)] border border-hairline bg-raised shadow-[var(--glow)]',
+        "rounded-[var(--radius-card)] border border-hairline bg-raised shadow-[var(--glow)]",
         className,
       )}
       {...props}
     />
-  )
+  );
 }

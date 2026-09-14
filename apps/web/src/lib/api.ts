@@ -4,6 +4,7 @@ import type {
   CapacityEntry,
   Card,
   DeckId,
+  OptionalVoterRole,
   Holiday,
   Player,
   PlayerRole,
@@ -46,6 +47,8 @@ export async function createRoom(
   deckId: DeckId,
   pointScale: Card[],
   sprint: SprintWindowInput,
+  optionalVoters: OptionalVoterRole[],
+  discussionLimit: number,
 ): Promise<string> {
   const { data, error } = await supabase.rpc('create_room', {
     p_session_name: sessionName,
@@ -56,6 +59,8 @@ export async function createRoom(
     p_sprint_start: sprint.start,
     p_sprint_days: sprint.days,
     p_holidays: sprint.holidays,
+    p_optional_voters: optionalVoters,
+    p_discussion_limit: discussionLimit,
   })
   fail(error)
   return data as string
@@ -92,7 +97,11 @@ export async function myActiveRooms(): Promise<number> {
 }
 
 export async function roomExists(roomId: string): Promise<boolean> {
-  const { data, error } = await supabase.from('rooms').select('id').eq('id', roomId).maybeSingle()
+  const { data, error } = await supabase
+    .from('rooms')
+    .select('id')
+    .eq('id', roomId)
+    .maybeSingle()
   if (error) return false
   return Boolean(data)
 }
@@ -244,15 +253,30 @@ export async function adjustParticipantPoints(
   )
 }
 
-export async function setQaVoting(roomId: string, enabled: boolean) {
-  fail((await supabase.rpc('set_qa_voting', { p_room_id: roomId, p_enabled: enabled })).error)
+/** Dá ou tira o baralho de um convidado (QA, Designer, Produto). */
+export async function setOptionalVoter(roomId: string, role: OptionalVoterRole, enabled: boolean) {
+  fail(
+    (
+      await supabase.rpc('set_optional_voter', {
+        p_room_id: roomId,
+        p_role: role,
+        p_enabled: enabled,
+      })
+    ).error,
+  )
+}
+
+/** Timebox da discussão por história. 0 desliga o aviso. */
+export async function setDiscussionLimit(roomId: string, seconds: number) {
+  fail(
+    (await supabase.rpc('set_discussion_limit', { p_room_id: roomId, p_seconds: seconds }))
+      .error,
+  )
 }
 
 /** `continueLater` pausa em vez de encerrar de vez: o histórico fica esperando. */
 export async function endGame(roomId: string, continueLater: boolean) {
-  fail(
-    (await supabase.rpc('end_game', { p_room_id: roomId, p_continue: continueLater })).error,
-  )
+  fail((await supabase.rpc('end_game', { p_room_id: roomId, p_continue: continueLater })).error)
 }
 
 export async function resumeGame(roomId: string) {

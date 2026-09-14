@@ -15,17 +15,48 @@ e o clique responde a teclado e toque sem nada extra.
 
 ```jsx live
 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-  <Button variant="joy">Criar sessão</Button>
-  <Button variant="primary">Revelar</Button>
-  <Button variant="secondary">Adicionar</Button>
+  <Button variant="solid">Revelar</Button>
+  <Button variant="soft">Adicionar</Button>
+  <Button variant="outline">Convidar</Button>
   <Button variant="ghost">Voltar</Button>
-  <Button variant="danger">Encerrar</Button>
+  <Button variant="white">Copiar resumo</Button>
+  <Button variant="link">Saiba mais</Button>
   <Button isDisabled>Indisponível</Button>
 </div>
 ```
 
-`joy` é a única variante que o registry não tem: o degradê da marca, reservado
-para a ação principal de uma tela.
+A escada de ênfase vem do **Preline**: `solid` é a ação da tela, `soft` e
+`outline` são o segundo nível, `ghost` e `link` somem até alguém passar o mouse,
+e `white` é a neutra — superfície elevada com traço fino.
+
+`joy` é a única fora dessa escada, e existe de propósito: o degradê da marca,
+reservado à chamada principal da entrada.
+
+```jsx live
+<Button variant="joy" size="lg">Criar uma sessão</Button>
+```
+
+### Tom
+
+A forma é uma coisa, a cor é outra. O tom não muda a variante — ele troca a
+rampa que ela usa, e cada uma sabe o que fazer com isso.
+
+```jsx live
+<div style={{ display: 'grid', gap: 10 }}>
+  {['brand', 'positive', 'attention', 'critical'].map((tom) => (
+    <div key={tom} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      <span style={{ width: 74, fontSize: 12, opacity: 0.7 }}>{tom}</span>
+      <Button variant="solid" tone={tom} size="sm">Confirmar</Button>
+      <Button variant="soft" tone={tom} size="sm">Ajustar</Button>
+      <Button variant="outline" tone={tom} size="sm">Revisar</Button>
+      <Button variant="ghost" tone={tom} size="sm">Cancelar</Button>
+    </div>
+  ))}
+</div>
+```
+
+Um botão dentro de um bloco que já declara papel herda a cor da pessoa sem
+receber prop nenhuma — é o mesmo `data-role` que pinta a mesa.
 
 ### Tamanhos
 
@@ -48,11 +79,105 @@ para a ação principal de uma tela.
 
 ## Checkbox
 
+Caixa e rótulo lado a lado, com a linha inteira clicável. O `Checkbox` do
+registry é só a caixa — este átomo é a linha, que é o uso do dia a dia.
+
 ```jsx live
-<div style={{ display: 'grid', gap: 10 }}>
+<div style={{ display: 'grid', gap: 12 }}>
   <Checkbox>A QA vota nesta sessão</Checkbox>
   <Checkbox defaultSelected>Carnaval</Checkbox>
+  <Checkbox
+    defaultSelected
+    description="Sexta-feira, 21 de novembro — sai do cálculo de capacidade"
+  >
+    Consciência Negra
+  </Checkbox>
   <Checkbox isDisabled>Indisponível</Checkbox>
+  <Checkbox defaultSelected data-tone="positive">
+    Dentro do limite
+  </Checkbox>
+</div>
+```
+
+## Select
+
+Um `<select>` nativo de propósito, e não um menu montado à mão: no celular ele
+abre a roda do sistema, que é mais rápida no polegar do que qualquer lista que a
+gente desenhe — e vem com busca por digitação e leitura de tela sem custo.
+
+```jsx live
+<div style={{ display: 'grid', gap: 12, maxWidth: 320 }}>
+  <Select defaultValue="both">
+    <option value="both">Front &amp; Back</option>
+    <option value="frontend">Somente Front</option>
+    <option value="backend">Somente Back</option>
+  </Select>
+  <Select size="sm" defaultValue="fib">
+    <option value="fib">Fibonacci</option>
+    <option value="custom">Personalizado</option>
+  </Select>
+  <Select disabled>
+    <option>Indisponível</option>
+  </Select>
+</div>
+```
+
+## Badge
+
+Não recebe cor: recebe um tom ou um papel, e o tema resolve. É por isso que o
+mesmo selo serve para "QA" e para "estourou o limite" sem ganhar variante nova.
+
+```jsx live
+<div style={{ display: 'grid', gap: 12 }}>
+  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    {['brand', 'positive', 'attention', 'critical', 'neutral'].map((t) => (
+      <Badge key={t} tone={t}>{t}</Badge>
+    ))}
+  </div>
+  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    {['po', 'tech_lead', 'frontend', 'backend', 'qa'].map((p) => (
+      <Badge key={p} role={p}>{p}</Badge>
+    ))}
+  </div>
+  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <Badge variant="soft" tone="critical">soft</Badge>
+    <Badge variant="solid" tone="critical">solid</Badge>
+    <Badge variant="outline" tone="critical">outline</Badge>
+  </div>
+</div>
+```
+
+## Note
+
+Recado em bloco: erro de formulário, aviso, confirmação. No tom crítico vira
+`role="alert"`, que é o que faz o leitor de tela anunciar sozinho — nos demais
+fica em silêncio, para não interromper quem está no meio de uma tarefa.
+
+Sem filhos ele não renderiza nada, então dá para escrever `<Note>{erro}</Note>`
+sem envolver num `&&`.
+
+```jsx live
+<div style={{ display: 'grid', gap: 10 }}>
+  <Note>Esse código não existe mais — a sala expirou.</Note>
+  <Note tone="attention">A sprint tem feriado no meio: 8 dias úteis.</Note>
+  <Note tone="positive">Todo mundo cravou o mesmo número.</Note>
+  <Note tone="brand">A QA acompanha esta sessão sem pontuar.</Note>
+  <Note>{''}</Note>
+</div>
+```
+
+## Progress
+
+Recebe quanto e de quanto, e não a porcentagem pronta — assim o cálculo mora num
+lugar só e os atributos de acessibilidade saem de graça. Passar do teto satura a
+barra; quem quiser avisar troca o tom.
+
+```jsx live
+<div style={{ display: 'grid', gap: 14, maxWidth: 320 }}>
+  <Progress value={3} max={8} label="3 de 8 pontos" />
+  <Progress value={7.5} max={8} tone="attention" label="quase no teto" />
+  <Progress value={11} max={8} tone="critical" label="estourou" />
+  <Progress value={5} max={8} size="sm" tone="positive" label="fino" />
 </div>
 ```
 
@@ -76,10 +201,10 @@ produto não pede foto a ninguém.
 
 ```jsx live
 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-  <Initials name="Ana" color={ROLE_ACCENT.frontend} size={48} />
-  <Initials name="Bruno" color={ROLE_ACCENT.backend} size={40} />
-  <Initials name="Carla" color={ROLE_ACCENT.qa} size={32} />
-  <Initials name="Diego" color={ROLE_ACCENT.tech_lead} size={32} dimmed />
+  <Initials name="Ana" role="frontend" size="xl" />
+  <Initials name="Bruno" role="backend" size="lg" />
+  <Initials name="Carla" role="qa" size="md" />
+  <Initials name="Diego" role="tech_lead" size="md" dimmed />
 </div>
 ```
 

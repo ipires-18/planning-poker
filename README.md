@@ -27,19 +27,21 @@ packages/
   Todas começam no meio ponto — não existe carta de 0.
 - **Histórias editáveis a qualquer momento** — o PO edita, reordena e exclui,
   tanto ao montar a sprint quanto com a sessão em andamento.
-- **Papéis**: Product Owner, Tech Lead, Front-End, Back-End e QA — com "quem
-  vota" e "quem recebe pontos" separados:
+- **Sete papéis**, com "quem vota" e "quem recebe pontos" separados:
 
   | Papel | Vota | Recebe pontos |
   |---|---|---|
-  | Product Owner | não | não |
-  | Tech Lead | sim | sim |
-  | Front-End / Back-End | sim | sim |
-  | QA | conforme a sala | não |
+  | Tech Lead, Front-End, Back-End | sempre | sim |
+  | Product Owner | se a sala configurar | nunca |
+  | QA, Designer, Produto | se a sala configurar | nunca |
 
-  A QA está na cerimônia para conhecer as histórias e levantar pontos, mas não é
-  dona de entrega. Se ela recebe baralho é decisão do PO ou do Tech Lead, sessão
-  a sessão.
+  Quem não é dono de entrega está na cerimônia para conhecer as histórias e
+  levantar pontos. Se recebe baralho é decisão do PO ou do Tech Lead, escolhida
+  ao montar a sprint e ajustável durante a sessão. Todos começam desligados —
+  voto de quem não pontua é exceção combinada.
+
+  **Produto** é o nome da cadeira, não da pessoa: é quem vem da área de negócio
+  naquela sprint, e isso troca de dono.
 - **Histórias tipadas** — só front, só back, ou ambos. Uma história "ambos" é
   votada duas vezes, um lado de cada vez.
 - **Votação oculta** com revelação simultânea e carta que vira em 3D.
@@ -47,16 +49,26 @@ packages/
   o total da história.
 - **"Ag. Definição"** para histórias que ainda não dá para pontuar — vira
   atribuição de responsável em vez de pontos.
-- **Cronômetro por história** e tempo médio de discussão no resumo.
+- **Cronômetro por história** — qualquer pessoa da mesa começa a contagem — e
+  tempo médio de discussão no resumo.
+- **Timebox de discussão**: o PO ou Tech Lead combina quanto tempo uma história
+  pode ficar em debate — de 3 a 30 minutos, escolhido ao montar a sprint e
+  ajustável durante a sessão. Passando disso, a mesa inteira vê o aviso: não é o
+  facilitador que precisa reparar no relógio e interromper. Não existe "sem
+  limite" — história que passa de meia hora em debate não está esperando
+  discussão, está esperando informação.
 - **Presença ao vivo** — quem fechou a aba aparece como ausente e não trava mais
   o contador de votos.
 - **Resumo final** copiável em texto plano, com correção manual de pontos.
-- **Capacidade do time**: janela de sprint (1 a 4 semanas ou 15 dias), feriados
+- **Capacidade do time**: janela de sprint (1 a 4 semanas, como no Scrum, ou
+  personalizada com as duas datas), feriados
   nacionais calculados automaticamente, ausências por pessoa e quantos pontos
   cada um assume. O cabeçalho mostra o comprometido contra a capacidade, e muda
   de cor quando o time passa do que cabe.
 - **Comemoração de consenso** quando o time inteiro crava a mesma carta — uma
-  explosão que sai do centro da mesa, diferente do confete do fim da planning.
+  explosão que sai do centro da mesa, diferente do confete do fim da planning. A
+  frase é configurável por ambiente (`VITE_CONSENSUS_CHEERS`), porque piada
+  interna é metade da graça de uma cerimônia.
 - **Parar hoje e continuar em outro dia**: quando sobram histórias na fila,
   encerrar vira uma escolha. Pausada, a sala guarda o histórico por sete dias e
   o PO ou Tech Lead dá o start de onde o time parou — com 24 horas novas.
@@ -67,8 +79,13 @@ packages/
 **Votar e pontuar são coisas diferentes.** Colar os dois é o que obrigaria a QA
 a carregar story points para poder opinar, ou a ficar muda para não carregar. O
 banco guarda as duas regras separadas: `role_scores()` é fixa por papel,
-`player_can_vote()` depende da sala. Desligar o voto da QA no meio de uma rodada
-apaga a carta dela, senão ficaria um voto contando para a revelação de quem não
+`player_can_vote()` depende da sala.
+
+E as duas se encaixam numa regra só: `role_is_optional_voter()` é literalmente a
+negação de `role_scores()` — quem não carrega story point é exatamente quem tem
+voto configurável. Não são duas listas que precisam ser mantidas em sincronia, é
+uma regra e o seu avesso. Desligar o voto de alguém no meio de uma rodada apaga
+a carta dela, senão ficaria um voto contando para a revelação de quem não
 deveria mais ter baralho.
 
 **A tabela não aceita escrita direta.** Não existe policy de INSERT, UPDATE ou
@@ -83,6 +100,11 @@ a planning fica no *começo* da sprint, não no fim. Com fila pendente, o time
 quase sempre quer a primeira: pausar, e voltar amanhã de onde parou. Pausada, a
 sala fica visível para quem chega pelo link, aceita gente nova, e o start é do
 PO ou do Tech Lead.
+
+**O aviso de discussão longa é para a mesa toda.** Quem conduz já tem o que
+fazer; reparar no relógio e interromper a conversa é socialmente caro, e por
+isso quase nunca acontece na hora certa. Com o aviso na tela de todo mundo, quem
+corta não é uma pessoa — é o combinado que o time fez no começo da sessão.
 
 **Sala de 24 horas.** Uma cerimônia dura duas; guardar o resto depois disso é
 armazenar dado de gente por nada — e o resumo final já sai da sala pelo botão de
@@ -132,7 +154,7 @@ Resumo do que protege o quê:
 |---|---|
 | Voto antes da revelação | RLS: a linha não é devolvida a mais ninguém |
 | Escrita em sala alheia | `is_room_host` / `is_room_member` dentro de cada função |
-| Papel que não pontua | `role_scores()` barra a alocação no `commit_story` |
+| Papel que não pontua | `role_scores()` barra a alocação no `commit_story`, inclusive para o PO com baralho |
 | Link de história | Só `http`/`https`, validado no banco e no cliente |
 | Chave no código | Nenhuma: tudo vem de `.env.local`, que está no `.gitignore` |
 | Função com privilégio | As 29 `security definer` fixam `search_path` |
@@ -197,6 +219,11 @@ Nada de chave escrita no código. O app lê `VITE_SUPABASE_URL` e
 `VITE_SUPABASE_ANON_KEY` do `.env.local`; os scripts leem as mesmas variáveis do
 ambiente e, se não achar, do `.env.local` ou `.env` — todos no `.gitignore`.
 
+Há ainda uma variável opcional, `VITE_CONSENSUS_CHEERS`: as frases da
+comemoração de consenso, separadas por `|`. Sem ela, vale a lista padrão. Como é
+variável do Vite, ela entra no bundle na hora do build — trocar a frase depois
+pede um deploy novo.
+
 A anon key é pública por natureza: ela vai no bundle que o navegador baixa. Quem
 protege os dados é o RLS, não o sigilo da chave. Mesmo assim ela não fica no
 código-fonte — chave em arquivo versionado é o hábito que um dia vaza a errada.
@@ -217,7 +244,7 @@ rodar se o `.env.local` estiver apontando para fora da máquina. Para forçar,
 | `pnpm lint` | Lint com oxlint |
 | `pnpm db:start` | Sobe um Supabase local em Docker |
 | `pnpm db:reset` | Recria o banco local a partir das migrations |
-| `pnpm smoke` | Roda as verificações de ponta a ponta |
+| `pnpm smoke` | Roda as 169 verificações de ponta a ponta |
 | `pnpm seed` | Cria uma sala de demonstração já povoada |
 | `pnpm demo:consenso 13` | Deixa uma sala pronta para ver a comemoração |
 
@@ -231,12 +258,17 @@ apps/web/src/
   pages/         Landing, SprintSetup, JoinRoom, Game
   types/         modelo de domínio
 
+  rotas:         /  ·  /new  ·  /join/:code  ·  /room/:code
+                 os endereços em português da versão anterior redirecionam,
+                 porque link de sala circula em chat e calendário
+
 packages/ds/src/
-  tokens/        o style guide, e a ponte para o shadcn
+  tokens/        o style guide, as rampas e a ponte para o shadcn
   ui/            primitivos do registry — não editamos
-  atoms/         a fachada, e o que é nosso
-  molecules/     átomos que só fazem sentido juntos
-  organisms/     pedaços de tela com comportamento próprio
+  atoms/         Button, Input, Select, Checkbox, Badge, Note, Progress,
+                 Card, Spinner, Initials, Logo
+  molecules/     Field, PersonChip, StatBlock
+  organisms/     Modal
 
 packages/db/
   supabase/migrations/   schema, RLS e funções
@@ -254,6 +286,23 @@ O tema chega neles por tradução: `tokens/shadcn-bridge.css` mapeia os papéis 
 o shadcn espera (`--primary`, `--muted`, `--destructive`) para os tokens da
 marca. Mexer numa cor reflete na biblioteca inteira, porque nenhum componente
 tem valor escrito dentro.
+
+**Cor é atributo, não prop.** O papel da pessoa vira `data-role` no HTML, e o
+tema resolve: o componente lê `--ds-accent` e nunca sabe que Front-End é ciano.
+São sete rampas de onze degraus, derivadas da curva da marca em OKLCH — cada
+degrau repete o passo de luminosidade e a proporção de croma que a marca tem
+naquele ponto, o que faz `mint-200` e `grape-200` pesarem o mesmo na tela.
+
+**O vocabulário dos componentes segue o [Preline](https://preline.co).** O botão
+tem `solid`, `soft`, `outline`, `ghost`, `white` e `link` — a escada inteira de
+ênfase — e a cor é um eixo à parte (`tone`). Cada tom entrega seis variantes
+prontas (repouso, hover, pressionado, tinta, fundo lavado, traço), já resolvidas
+para claro e escuro com `light-dark()`. Nada disso é dependência: o Preline é
+HTML e Tailwind, então o que veio foi o vocabulário, não a biblioteca.
+
+As duas exceções são `joy` e `joy-mirror`, o degradê da marca: existem para as
+duas pontas da jornada — criar a sessão e sentar nela — e o espelho corre ao
+contrário, o que faz as telas se reconhecerem como par sem serem a mesma coisa.
 
 A vitrine roda em `apps/docs` com playground ao vivo:
 

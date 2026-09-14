@@ -58,7 +58,7 @@ for (const [nome, papel] of [
 console.log(`
 ✓ Sala ${room} pronta, três pessoas cravaram ${carta}.
 
-  1. Abra  ${APP_URL}/entrar/${room}
+  1. Abra  ${APP_URL}/join/${room}
   2. Entre como Tech Lead
   3. Vote ${carta} também — o consenso só conta com todo mundo
   4. Clique em Revelar

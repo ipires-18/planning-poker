@@ -3,7 +3,35 @@ import type { Holiday } from '@/lib/holidays'
 
 export type { Card, DeckId, Holiday }
 
-export type PlayerRole = 'po' | 'tech_lead' | 'frontend' | 'backend' | 'qa'
+export type PlayerRole =
+  | 'po'
+  | 'tech_lead'
+  | 'frontend'
+  | 'backend'
+  | 'qa'
+  | 'designer'
+  | 'product'
+
+/**
+ * Quem vota só se a sala configurar.
+ *
+ * É exatamente quem não é dono de entrega: o PO, que conduz, e os convidados,
+ * que entram para conhecer as histórias e levantar pontos. Nenhum deles recebe
+ * story point em nenhuma configuração — votar e pontuar são coisas separadas.
+ *
+ * O padrão é todo mundo em `false`: voto de quem não pontua é exceção
+ * combinada, e exceção não pode ser o padrão.
+ *
+ * "Produto" é o nome da cadeira e não da pessoa: é quem vem do negócio naquela
+ * sprint, e isso troca.
+ */
+export const OPTIONAL_VOTERS = ['po', 'qa', 'designer', 'product'] as const
+
+export type OptionalVoterRole = (typeof OPTIONAL_VOTERS)[number]
+
+export function roleIsOptionalVoter(role: PlayerRole): role is OptionalVoterRole {
+  return (OPTIONAL_VOTERS as readonly string[]).includes(role)
+}
 export type StoryKind = 'frontend' | 'backend' | 'both'
 export type VotingSide = 'frontend' | 'backend'
 
@@ -26,8 +54,10 @@ export interface Room {
   sprint_start: string
   sprint_days: number
   holidays: Holiday[]
-  /** Se a QA recebe baralho nesta sessão. Quem define é o PO / Tech Lead. */
-  qa_votes: boolean
+  /** Quem, entre os que não pontuam, tem baralho nesta sessão. */
+  optional_voters: OptionalVoterRole[]
+  /** Timebox de discussão por história, em segundos. 0 desliga o aviso. */
+  discussion_limit_seconds: number
 }
 
 export interface Player {
@@ -112,6 +142,8 @@ export const ROLE_LABEL: Record<PlayerRole, string> = {
   frontend: 'Front-End',
   backend: 'Back-End',
   qa: 'QA',
+  designer: 'Designer',
+  product: 'Produto',
 }
 
 export const ROLE_SHORT: Record<PlayerRole, string> = {
@@ -120,31 +152,24 @@ export const ROLE_SHORT: Record<PlayerRole, string> = {
   frontend: 'Front',
   backend: 'Back',
   qa: 'QA',
-}
-
-/** Cada papel tem sua cor — é como o olho acha a pessoa na mesa. */
-export const ROLE_ACCENT: Record<PlayerRole, string> = {
-  po: 'var(--color-zest)',
-  tech_lead: 'var(--color-grape)',
-  frontend: 'var(--color-sky)',
-  backend: 'var(--color-mint)',
-  qa: 'var(--color-punch)',
+  designer: 'Design',
+  product: 'Produto',
 }
 
 /**
  * Quem é dono de entrega e por isso recebe pontos.
  *
- * O PO conduz e a QA acompanha para conhecer as histórias e levantar pontos —
- * nenhum dos dois carrega story points. Já votar é outra conversa: a QA pode ou
- * não ter baralho, e isso é decidido por sala.
+ * O PO conduz e os convidados acompanham para conhecer as histórias e levantar
+ * pontos — nenhum deles carrega story points, em nenhuma configuração. Já votar
+ * é outra conversa: cada um pode ou não ter baralho, e isso é decidido por
+ * sala. Quem não pontua é exatamente quem tem voto configurável.
  */
 export function roleScores(role: PlayerRole): boolean {
   return role === 'tech_lead' || role === 'frontend' || role === 'backend'
 }
 
-export function roleVotes(role: PlayerRole, qaVotes: boolean): boolean {
-  if (role === 'po') return false
-  if (role === 'qa') return qaVotes
+export function roleVotes(role: PlayerRole, optionalVoters: OptionalVoterRole[]): boolean {
+  if (roleIsOptionalVoter(role)) return optionalVoters.includes(role)
   return true
 }
 
@@ -154,8 +179,18 @@ export const KIND_LABEL: Record<StoryKind, string> = {
   both: 'Front & Back',
 }
 
-export const KIND_COLOR: Record<StoryKind, string> = {
-  frontend: 'var(--color-sky)',
-  backend: 'var(--color-mint)',
-  both: 'var(--color-grape)',
+/**
+ * O tipo da história e o lado em votação pegam emprestada a cor do papel
+ * correspondente: front é ciano porque Front-End é ciano. Guardamos o papel,
+ * não a cor — quem resolve a cor é o tema.
+ */
+export const KIND_TONE: Record<StoryKind, PlayerRole> = {
+  frontend: 'frontend',
+  backend: 'backend',
+  both: 'tech_lead',
+}
+
+export const SIDE_TONE: Record<VotingSide, PlayerRole> = {
+  frontend: 'frontend',
+  backend: 'backend',
 }

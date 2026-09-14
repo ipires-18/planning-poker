@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Button, Modal } from '../ui'
+import { Button } from '@pp/ds/atoms'
+import { Modal } from '@pp/ds/organisms'
 
 interface Props {
   open: boolean
@@ -41,7 +42,7 @@ export function EndSessionModal({ open, onClose, pending, onEnd }: Props) {
               Voltar
             </Button>
             <Button
-              variant="danger"
+              variant="solid" tone="critical"
               className="flex-1"
               onClick={() => void finish(false)}
               isDisabled={busy}

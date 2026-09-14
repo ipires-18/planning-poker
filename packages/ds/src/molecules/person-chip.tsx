@@ -1,37 +1,40 @@
-import { Initials } from '#atoms/initials'
+import { Initials, type InitialsSize } from '#atoms/initials'
 import { cn } from '#lib/utils'
+import type { AccentRole } from '#tokens/index'
 
 /**
  * Quem é a pessoa, em uma linha: inicial colorida, nome e papel.
  *
- * Aparece na mesa, no placar, na divisão de pontos e no resumo. Ter uma peça
- * só é o que garante que a mesma pessoa se pareça consigo mesma em todas.
+ * Aparece na mesa, no placar, na divisão de pontos e no resumo. Ter uma peça só
+ * é o que garante que a mesma pessoa se pareça consigo mesma em todas.
+ *
+ * A cor vem do `data-role`, resolvida pelo tema — o componente não sabe que
+ * Front-End é ciano, e não precisa saber.
  */
 export function PersonChip({
   name,
   role,
-  accent,
+  roleLabel,
   size = 'md',
   meta,
   dimmed,
   className,
 }: {
   name: string
+  role: AccentRole
   /** Rótulo curto do papel: "Front", "Lead", "QA". */
-  role?: string
-  /** Cor do papel: `ROLE_ACCENT[role]`. */
-  accent: string
+  roleLabel?: string
   size?: 'sm' | 'md'
   /** Complemento discreto: "falta 2d", "ausente". */
   meta?: string
   dimmed?: boolean
   className?: string
 }) {
-  const avatar = size === 'sm' ? 26 : 34
+  const avatar: InitialsSize = size === 'sm' ? 'sm' : 'md'
 
   return (
-    <span className={cn('flex min-w-0 items-center gap-3', className)}>
-      <Initials name={name} color={accent} size={avatar} dimmed={dimmed} />
+    <span data-role={role} className={cn('flex min-w-0 items-center gap-3', className)}>
+      <Initials name={name} role={role} size={avatar} dimmed={dimmed} />
       <span className="flex min-w-0 flex-col">
         <span
           className={cn(
@@ -41,12 +44,9 @@ export function PersonChip({
         >
           {name}
         </span>
-        {(role || meta) && (
-          <span
-            className="truncate text-overline font-black uppercase tracking-(--tracking-overline)"
-            style={{ color: accent }}
-          >
-            {[role, meta].filter(Boolean).join(' · ')}
+        {(roleLabel || meta) && (
+          <span className="truncate text-overline font-black uppercase tracking-(--tracking-overline) text-(--ds-accent)">
+            {[roleLabel, meta].filter(Boolean).join(' · ')}
           </span>
         )}
       </span>

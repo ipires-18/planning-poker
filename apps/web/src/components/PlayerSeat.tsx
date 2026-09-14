@@ -1,6 +1,6 @@
-import { Avatar } from './ui'
+import { Initials } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
-import { ROLE_ACCENT, ROLE_SHORT, type Player } from '@/types'
+import { ROLE_SHORT, type Player } from '@/types'
 
 interface Props {
   player: Player
@@ -14,13 +14,16 @@ interface Props {
 /**
  * Uma cadeira da mesa. A carta vira de verdade — o verso e a frente são duas
  * faces do mesmo elemento 3D, então a revelação de todos acontece junta.
+ *
+ * `data-role` no topo faz o acento descer para tudo aqui dentro: o degradê do
+ * verso, a sombra, o número na frente e o rótulo do papel leem a mesma
+ * `--ds-accent`, que o tema resolve.
  */
 export function PlayerSeat({ player, vote, hasVoted, revealed, isYou, isOnline }: Props) {
-  const accent = ROLE_ACCENT[player.role]
   const showFace = revealed && vote !== null
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div data-role={player.role} className="flex flex-col items-center gap-3">
       <div className="[perspective:1000px]">
         <div
           className={cx(
@@ -33,14 +36,12 @@ export function PlayerSeat({ player, vote, hasVoted, revealed, isYou, isOnline }
         >
           {/* Verso */}
           <div
-            className="absolute inset-0 flex items-center justify-center rounded-[1.1rem] [backface-visibility:hidden]"
-            style={{
-              background: hasVoted
-                ? `linear-gradient(145deg, ${accent}, color-mix(in oklab, ${accent} 45%, var(--color-brand-700)))`
-                : 'var(--surface-sunken)',
-              border: hasVoted ? 'none' : '2px dashed var(--surface-border)',
-              boxShadow: hasVoted ? `0 14px 30px -16px ${accent}` : 'none',
-            }}
+            className={cx(
+              'absolute inset-0 flex items-center justify-center rounded-[1.1rem] [backface-visibility:hidden]',
+              hasVoted
+                ? 'bg-[linear-gradient(145deg,var(--ds-accent),color-mix(in_oklab,var(--ds-accent)_45%,var(--color-brand-700)))] shadow-[0_14px_30px_-16px_var(--ds-accent)]'
+                : 'border-2 border-dashed border-hairline bg-sunken',
+            )}
           >
             {hasVoted && (
               <span className="text-2xl text-white/70" aria-hidden>
@@ -50,16 +51,12 @@ export function PlayerSeat({ player, vote, hasVoted, revealed, isYou, isOnline }
           </div>
 
           {/* Frente */}
-          <div
-            className="absolute inset-0 flex items-center justify-center rounded-[1.1rem] border-2 border-hairline bg-[var(--surface-raised)] [backface-visibility:hidden] [transform:rotateY(180deg)]"
-            style={{ boxShadow: `0 14px 30px -18px ${accent}` }}
-          >
+          <div className="absolute inset-0 flex items-center justify-center rounded-[1.1rem] border-2 border-hairline bg-raised shadow-[0_14px_30px_-18px_var(--ds-accent)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
             <span
               className={cx(
-                'px-1 text-center font-black leading-none',
+                'px-1 text-center font-black leading-none text-(--ds-accent)',
                 vote && vote.length > 3 ? 'text-[10px] uppercase' : 'text-3xl',
               )}
-              style={{ color: accent }}
             >
               {vote}
             </span>
@@ -69,21 +66,17 @@ export function PlayerSeat({ player, vote, hasVoted, revealed, isYou, isOnline }
 
       <div className="flex max-w-24 flex-col items-center gap-1">
         <div className="relative">
-          <Avatar name={player.name} color={accent} size={40} dimmed={!isOnline} />
+          <Initials name={player.name} role={player.role} size="lg" dimmed={!isOnline} />
           {isOnline && (
             <span
-              className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2"
-              style={{
-                backgroundColor: 'var(--color-mint)',
-                borderColor: 'var(--surface-base)',
-              }}
+              className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-surface bg-mint"
               title="Online"
             />
           )}
         </div>
         <span
           className={cx(
-            'max-w-full truncate text-xs font-black',
+            'max-w-full truncate text-caption font-black',
             isYou ? 'text-ink' : 'text-ink-muted',
           )}
           title={player.name}
@@ -91,10 +84,7 @@ export function PlayerSeat({ player, vote, hasVoted, revealed, isYou, isOnline }
           {player.name}
           {isYou && ' (você)'}
         </span>
-        <span
-          className="text-[9px] font-black uppercase tracking-[0.1em]"
-          style={{ color: accent }}
-        >
+        <span className="text-[9px] font-black uppercase tracking-[0.1em] text-(--ds-accent)">
           {ROLE_SHORT[player.role]}
         </span>
       </div>

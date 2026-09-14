@@ -1,7 +1,14 @@
 import { useCallback, useMemo, useState } from 'react'
 import * as api from '@/lib/api'
 import type { Holiday } from '@/lib/holidays'
-import type { Allocation, CapacityEntry, Story, StoryKind, VotingSide } from '@/types'
+import type {
+  Allocation,
+  CapacityEntry,
+  OptionalVoterRole,
+  Story,
+  StoryKind,
+  VotingSide,
+} from '@/types'
 import type { StoryEdit } from '@/components/StoryQueue'
 
 export interface SprintWindow {
@@ -83,14 +90,14 @@ export function useGameActions(roomId: string, refresh: () => Promise<void>) {
       setCapacity: (entries: CapacityEntry[]) =>
         mutate(() => api.setTeamCapacity(roomId, entries)),
 
-      setQaVoting: (enabled: boolean) => mutate(() => api.setQaVoting(roomId, enabled)),
+      setOptionalVoter: (role: OptionalVoterRole, enabled: boolean) =>
+        mutate(() => api.setOptionalVoter(roomId, role, enabled)),
 
-      adjustPoints: (
-        storyId: string,
-        playerId: string,
-        side: VotingSide,
-        points: number,
-      ) => mutate(() => api.adjustParticipantPoints(storyId, playerId, side, points)),
+      setDiscussionLimit: (seconds: number) =>
+        mutate(() => api.setDiscussionLimit(roomId, seconds)),
+
+      adjustPoints: (storyId: string, playerId: string, side: VotingSide, points: number) =>
+        mutate(() => api.adjustParticipantPoints(storyId, playerId, side, points)),
 
       /* --- sessão -------------------------------------------------------- */
       endGame: (continueLater: boolean) => mutate(() => api.endGame(roomId, continueLater)),

@@ -1,4 +1,4 @@
-import { Button } from '../ui'
+import { Button } from '@pp/ds/atoms'
 
 export function RoomNotFound({ reason, onLeave }: { reason?: string | null; onLeave: () => void }) {
   return (

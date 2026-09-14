@@ -8,12 +8,24 @@ import {
   Initials,
   Input,
   Label,
+  Note,
+  Progress,
+  Select,
   Separator,
   Spinner,
 } from '@pp/ds/atoms'
 import { Field, PersonChip, StatBlock } from '@pp/ds/molecules'
 import { Modal } from '@pp/ds/organisms'
-import { FEEDBACK, RADII, ROLE_ACCENT, SPACE_SCALE, TYPE_SCALE } from '@pp/ds/tokens'
+import {
+  PALETTES,
+  RADII,
+  RAMP_STEPS,
+  ROLE_PALETTE,
+  SPACE_SCALE,
+  TONE_PALETTE,
+  TONE_VARIANTS,
+  TYPE_SCALE,
+} from "@pp/ds/tokens"
 
 /**
  * O que o playground enxerga.
@@ -37,6 +49,9 @@ const ReactLiveScope = {
   Card,
   Spinner,
   Initials,
+  Select,
+  Note,
+  Progress,
 
   // Moléculas
   Field,
@@ -47,8 +62,11 @@ const ReactLiveScope = {
   Modal,
 
   // Tokens
-  ROLE_ACCENT,
-  FEEDBACK,
+  PALETTES,
+  RAMP_STEPS,
+  ROLE_PALETTE,
+  TONE_PALETTE,
+  TONE_VARIANTS,
   TYPE_SCALE,
   SPACE_SCALE,
   RADII,

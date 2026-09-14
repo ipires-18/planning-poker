@@ -72,7 +72,7 @@ const carlaId = joins[2].data
 
 // Carla entrou como QA. Ligamos o voto dela para exercitar o caso mais
 // interessante do modelo: vota, aparece na mesa, e mesmo assim não pontua.
-await po.client.rpc('set_qa_voting', { p_room_id: roomId, p_enabled: true })
+await po.client.rpc('set_optional_voter', { p_room_id: roomId, p_role: 'qa', p_enabled: true })
 
 const { count: seatCount } = await po.client
   .from('players')
@@ -679,8 +679,9 @@ const { data: roomQ } = await po.client.rpc('create_room', {
 const devQ = await ana.client.rpc('join_room', { p_room_id: roomQ, p_name: 'Ana', p_role: 'frontend' })
 const qaQ = await carla.client.rpc('join_room', { p_room_id: roomQ, p_name: 'Carla', p_role: 'qa' })
 
-const { data: roomQRow } = await po.client.from('rooms').select('qa_votes').eq('id', roomQ).single()
-check('por padrão a QA não vota', roomQRow.qa_votes === false)
+const { data: roomQRow } = await po.client.from('rooms').select('optional_voters').eq('id', roomQ).single()
+check('por padrão ninguém que não pontua vota', roomQRow.optional_voters.length === 0,
+  `veio ${JSON.stringify(roomQRow.optional_voters)}`)
 
 const { data: storiesQ } = await po.client.from('stories').select('*').eq('room_id', roomQ)
 const voteAs = (client, value) =>
@@ -692,19 +693,19 @@ const { error: qaBlocked } = await voteAs(carla.client, '5')
 check('com a QA desligada, o voto dela é recusado pelo banco', Boolean(qaBlocked))
 
 const { error: poBlocked } = await voteAs(po.client, '5')
-check('o PO nunca vota', Boolean(poBlocked))
+check('o PO também começa sem baralho', Boolean(poBlocked))
 
 const { error: devVote } = await voteAs(ana.client, '5')
 check('quem é dono de entrega vota normalmente', !devVote, devVote?.message)
 
 // --- ligar a QA ---
-const { error: carlaToggle } = await carla.client.rpc('set_qa_voting', {
-  p_room_id: roomQ, p_enabled: true,
+const { error: carlaToggle } = await carla.client.rpc('set_optional_voter', {
+  p_room_id: roomQ, p_role: 'qa', p_enabled: true,
 })
 check('a própria QA não liga o próprio voto', Boolean(carlaToggle))
 
-const { error: toggleError } = await po.client.rpc('set_qa_voting', {
-  p_room_id: roomQ, p_enabled: true,
+const { error: toggleError } = await po.client.rpc('set_optional_voter', {
+  p_room_id: roomQ, p_role: 'qa', p_enabled: true,
 })
 check('PO liga o voto da QA', !toggleError, toggleError?.message)
 
@@ -712,7 +713,7 @@ const { error: qaAllowed } = await voteAs(carla.client, '8')
 check('com a QA ligada, ela vota', !qaAllowed, qaAllowed?.message)
 
 // --- desligar no meio da rodada limpa o voto dela ---
-await po.client.rpc('set_qa_voting', { p_room_id: roomQ, p_enabled: false })
+await po.client.rpc('set_optional_voter', { p_room_id: roomQ, p_role: 'qa', p_enabled: false })
 const { data: qaSeat } = await po.client.from('players').select('has_voted').eq('id', qaQ.data).single()
 check('desligar limpa o voto e apaga a carta da QA', qaSeat.has_voted === false)
 
@@ -760,6 +761,178 @@ check(
   Number(qaCapacity.capacity_points) === 0,
   `ficou com ${qaCapacity.capacity_points}`,
 )
+
+/* ------------------------------------- regras definidas na criação --- */
+console.log('\nRegras escolhidas ao montar a sprint')
+
+const regras = await newUser('Quem monta a sprint')
+const { data: roomR, error: erroR } = await regras.client.rpc('create_room', {
+  p_session_name: 'Sprint com regras',
+  p_host_name: 'Rita',
+  p_stories: [{ title: 'História', link: null, kind: 'both' }],
+  p_optional_voters: ['po', 'qa'],
+  p_discussion_limit: 480,
+})
+check('a sala nasce já configurada', !erroR, erroR?.message)
+
+const { data: linhaR } = await regras.client
+  .from('rooms').select('optional_voters, discussion_limit_seconds').eq('id', roomR).single()
+check('com quem vota', linhaR.optional_voters.sort().join(',') === 'po,qa',
+  JSON.stringify(linhaR.optional_voters))
+check('e com o timebox', linhaR.discussion_limit_seconds === 480,
+  `veio ${linhaR.discussion_limit_seconds}`)
+
+const { data: historiaR } = await regras.client
+  .from('stories').select('id').eq('room_id', roomR).single()
+const { error: poVotaJa } = await regras.client.rpc('cast_vote', {
+  p_room_id: roomR, p_story_id: historiaR.id, p_side: 'frontend', p_round: 1, p_value: '5',
+})
+check('e o PO já entra votando, sem precisar configurar de novo', !poVotaJa, poVotaJa?.message)
+
+const semRegras = await newUser('Outra pessoa')
+const { error: listaInvalida } = await semRegras.client.rpc('create_room', {
+  p_session_name: 'Sprint inválida',
+  p_host_name: 'Quem for',
+  p_stories: [{ title: 'História', link: null, kind: 'both' }],
+  p_optional_voters: ['frontend'],
+})
+check('mas papel que já vota sempre é recusado na criação', Boolean(listaInvalida))
+
+await regras.client.rpc('end_game', { p_room_id: roomR, p_continue: false })
+
+/* ------------------------------------------------------- cronômetro --- */
+console.log('\nCronômetro')
+
+const { error: anaCrono } = await ana.client.rpc('start_story_timer', {
+  p_story_id: storiesQ[0].id,
+})
+check('quem está na mesa começa a contar, sem precisar ser host', !anaCrono, anaCrono?.message)
+
+const { data: comTempo } = await po.client
+  .from('stories').select('started_at').eq('id', storiesQ[0].id).single()
+check('e a hora vem do servidor', Boolean(comTempo.started_at))
+
+const inicio = comTempo.started_at
+await po.client.rpc('start_story_timer', { p_story_id: storiesQ[0].id })
+const { data: depois } = await po.client
+  .from('stories').select('started_at').eq('id', storiesQ[0].id).single()
+check('começar de novo não reinicia o relógio', depois.started_at === inicio)
+
+const forasteiro = await newUser('Quem não entrou')
+const { error: foraCrono } = await forasteiro.client.rpc('start_story_timer', {
+  p_story_id: storiesQ[0].id,
+})
+check('mas quem não está na sala não mexe no cronômetro', Boolean(foraCrono))
+
+/* ------------------------------------------------- o PO com baralho --- */
+console.log('\nPO votando — quando a sala decide assim')
+
+const { error: poLiga } = await po.client.rpc('set_optional_voter', {
+  p_room_id: roomQ, p_role: 'po', p_enabled: true,
+})
+check('o PO pode ligar o próprio voto', !poLiga, poLiga?.message)
+
+const { error: poVota } = await voteAs(po.client, '3')
+check('e aí ele vota', !poVota, poVota?.message)
+
+const { data: poSeatRow } = await po.client
+  .from('players').select('id').eq('room_id', roomQ).eq('role', 'po').single()
+
+const { error: poGanha } = await po.client.rpc('commit_story', {
+  p_room_id: roomQ,
+  p_points: 5,
+  p_allocations: [{ player_id: poSeatRow.id, points: 5, pending: false }],
+})
+check('mesmo votando, o PO não recebe story point', Boolean(poGanha))
+
+await po.client.rpc('set_team_capacity', {
+  p_room_id: roomQ,
+  p_entries: [{ player_id: poSeatRow.id, capacity_points: 12, days_off: 0 }],
+})
+const { data: capPo } = await po.client
+  .from('players').select('capacity_points').eq('id', poSeatRow.id).single()
+check('nem capacidade', Number(capPo.capacity_points) === 0, `ficou com ${capPo.capacity_points}`)
+
+// Desligar limpa o voto dele, como em qualquer outro papel opcional.
+await po.client.rpc('set_optional_voter', { p_room_id: roomQ, p_role: 'po', p_enabled: false })
+const { error: poBloqueadoDeNovo } = await voteAs(po.client, '3')
+check('desligado, volta a não votar', Boolean(poBloqueadoDeNovo))
+
+const { error: donoDeEntrega } = await po.client.rpc('set_optional_voter', {
+  p_room_id: roomQ, p_role: 'tech_lead', p_enabled: false,
+})
+check('não dá para tirar o voto de quem é dono de entrega', Boolean(donoDeEntrega))
+
+/* ------------------------------------------- designer e produto na mesa --- */
+console.log('\nDesigner e Produto — convidados, como a QA')
+
+const dan = await newUser('Dan Designer')
+const paula = await newUser('Paula Produto')
+
+const danSeat = await dan.client.rpc('join_room', {
+  p_room_id: roomQ, p_name: 'Dan', p_role: 'designer',
+})
+const paulaSeat = await paula.client.rpc('join_room', {
+  p_room_id: roomQ, p_name: 'Paula', p_role: 'product',
+})
+check('Designer e Produto sentam à mesa', !danSeat.error && !paulaSeat.error,
+  danSeat.error?.message ?? paulaSeat.error?.message)
+
+const votarNaSala = (client, value) =>
+  client.rpc('cast_vote', {
+    p_room_id: roomQ, p_story_id: storiesQ[0].id, p_side: 'frontend', p_round: 2, p_value: value,
+  })
+
+await po.client.rpc('reset_round', { p_room_id: roomQ })
+
+const { error: danBloqueado } = await votarNaSala(dan.client, '5')
+check('desligados, nem Designer', Boolean(danBloqueado))
+const { error: paulaBloqueada } = await votarNaSala(paula.client, '5')
+check('nem Produto votam', Boolean(paulaBloqueada))
+
+// Ligar um convidado não liga os outros: a lista é por papel.
+await po.client.rpc('set_optional_voter', { p_room_id: roomQ, p_role: 'designer', p_enabled: true })
+const { error: danVota } = await votarNaSala(dan.client, '5')
+check('ligado, o Designer vota', !danVota, danVota?.message)
+const { error: paulaAinda } = await votarNaSala(paula.client, '5')
+check('e ligar o Designer não liga o Produto junto', Boolean(paulaAinda))
+
+const { data: listaSala } = await po.client
+  .from('rooms').select('optional_voters').eq('id', roomQ).single()
+check('a lista guarda só quem foi ligado',
+  listaSala.optional_voters.length === 1 && listaSala.optional_voters[0] === 'designer',
+  JSON.stringify(listaSala.optional_voters))
+
+const { error: papelErrado } = await po.client.rpc('set_optional_voter', {
+  p_room_id: roomQ, p_role: 'frontend', p_enabled: true,
+})
+check('quem é dono de entrega não entra na lista — ele já vota sempre',
+  Boolean(papelErrado))
+
+const { error: danPontos } = await po.client.rpc('commit_story', {
+  p_room_id: roomQ,
+  p_points: 5,
+  p_allocations: [{ player_id: danSeat.data, points: 5, pending: false }],
+})
+check('Designer não recebe story point', Boolean(danPontos))
+
+const { error: paulaPontos } = await po.client.rpc('commit_story', {
+  p_room_id: roomQ,
+  p_points: 5,
+  p_allocations: [{ player_id: paulaSeat.data, points: 5, pending: false }],
+})
+check('Produto também não', Boolean(paulaPontos))
+
+await po.client.rpc('set_team_capacity', {
+  p_room_id: roomQ,
+  p_entries: [{ player_id: paulaSeat.data, capacity_points: 8, days_off: 0 }],
+})
+const { data: capPaula } = await po.client
+  .from('players').select('capacity_points').eq('id', paulaSeat.data).single()
+check('nem capacidade', Number(capPaula.capacity_points) === 0,
+  `ficou com ${capPaula.capacity_points}`)
+
+await po.client.rpc('end_game', { p_room_id: roomQ, p_continue: false })
 
 /* --------------------------------------------------- pausar e continuar --- */
 console.log('\nPausar hoje, continuar em outro dia')
@@ -949,6 +1122,57 @@ const { count: sobraram } = await alvo.client
 check('nem apaga história por fora do RPC', sobraram === 1, `sobrou ${sobraram}`)
 
 await alvo.client.rpc('end_game', { p_room_id: roomX, p_continue: false })
+
+/* ------------------------------------------------- timebox da discussão --- */
+console.log('\nTimebox da discussão')
+
+const { data: salaPadrao } = await po.client
+  .from('rooms').select('discussion_limit_seconds').eq('id', roomId).maybeSingle()
+check('a sala nasce com 5 minutos de discussão por história',
+  salaPadrao?.discussion_limit_seconds === 300, `veio ${salaPadrao?.discussion_limit_seconds}`)
+
+const { error: anaLimite } = await ana.client.rpc('set_discussion_limit', {
+  p_room_id: roomId, p_seconds: 900,
+})
+check('participante comum não muda o combinado de ritmo', Boolean(anaLimite))
+
+const { data: depoisDaAna } = await po.client
+  .from('rooms').select('discussion_limit_seconds').eq('id', roomId).maybeSingle()
+check('e o valor continua o mesmo depois da tentativa dela',
+  depoisDaAna?.discussion_limit_seconds === 300)
+
+const { error: poLimite } = await po.client.rpc('set_discussion_limit', {
+  p_room_id: roomId, p_seconds: 480,
+})
+check('o PO define o tempo', !poLimite, poLimite?.message)
+
+// Fora da faixa o RPC apara em vez de estourar: a interface só oferece valores
+// válidos, então chegar aqui fora da faixa é chamada direta à API.
+await po.client.rpc('set_discussion_limit', { p_room_id: roomId, p_seconds: 99999 })
+const { data: aparado } = await po.client
+  .from('rooms').select('discussion_limit_seconds').eq('id', roomId).maybeSingle()
+check('valor absurdo é aparado no teto de uma hora',
+  aparado?.discussion_limit_seconds === 3600, `veio ${aparado?.discussion_limit_seconds}`)
+
+await po.client.rpc('set_discussion_limit', { p_room_id: roomId, p_seconds: 0 })
+const { data: desligado } = await po.client
+  .from('rooms').select('discussion_limit_seconds').eq('id', roomId).maybeSingle()
+check('zero desliga o aviso e não é aparado para 30',
+  desligado?.discussion_limit_seconds === 0, `veio ${desligado?.discussion_limit_seconds}`)
+
+const { error: negativo } = await po.client.rpc('set_discussion_limit', {
+  p_room_id: roomId, p_seconds: -5,
+})
+check('tempo negativo é recusado', Boolean(negativo))
+
+// Escrita direta continua fechada, como em toda tabela.
+await ana.client.from('rooms').update({ discussion_limit_seconds: 60 }).eq('id', roomId)
+const { data: semEscritaDireta } = await po.client
+  .from('rooms').select('discussion_limit_seconds').eq('id', roomId).maybeSingle()
+check('ninguém muda o tempo escrevendo direto na tabela',
+  semEscritaDireta?.discussion_limit_seconds === 0)
+
+await po.client.rpc('set_discussion_limit', { p_room_id: roomId, p_seconds: 300 })
 
 /* --------------------------------------------------------------- validade --- */
 console.log('\nValidade da sala')

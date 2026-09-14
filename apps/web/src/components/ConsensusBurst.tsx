@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { randomCheer } from '@/lib/cheers'
 
 /**
  * Comemoração de consenso.
@@ -8,24 +9,13 @@ import { useEffect, useState } from 'react'
  * perderia o peso de ser o momento maior.
  */
 
-const CHEERS = [
-  'Todo mundo no mesmo número!',
-  'Consenso de primeira!',
-  'O time leu a mesma história!',
-  'Nem precisou discutir!',
-  'Alinhadíssimos!',
-]
-
 const SPARKS = ['✦', '✧', '★', '◆', '●']
 
-const COLORS = [
-  'var(--color-brand-400)',
-  'var(--color-punch)',
-  'var(--color-zest)',
-  'var(--color-mint)',
-  'var(--color-sky)',
-  'var(--color-grape)',
-]
+/**
+ * A festa usa os papéis do time, não uma paleta paralela: são as mesmas cores
+ * das pessoas que acabaram de concordar.
+ */
+const TONES = ['tech_lead', 'qa', 'po', 'backend', 'frontend'] as const
 
 interface Props {
   /** O rótulo da carta em que o time cravou. */
@@ -51,7 +41,7 @@ export function ConsensusBurst({ value, voters, onDone }: Props) {
       return {
         id: i,
         glyph: SPARKS[i % SPARKS.length],
-        color: COLORS[i % COLORS.length],
+        tone: TONES[i % TONES.length],
         x: Math.cos((angle * Math.PI) / 180) * distance,
         y: Math.sin((angle * Math.PI) / 180) * distance,
         size: 12 + Math.random() * 18,
@@ -61,7 +51,7 @@ export function ConsensusBurst({ value, voters, onDone }: Props) {
     }),
   )
 
-  const [cheer] = useState(() => CHEERS[Math.floor(Math.random() * CHEERS.length)])
+  const [cheer] = useState(randomCheer)
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -89,11 +79,15 @@ export function ConsensusBurst({ value, voters, onDone }: Props) {
         {Array.from({ length: 12 }, (_, i) => (
           <span
             key={i}
-            className="absolute left-1/2 top-1/2 h-[15rem] w-1 origin-top rounded-full opacity-70"
-            style={{
-              background: `linear-gradient(to bottom, ${COLORS[i % COLORS.length]}, transparent)`,
-              transform: `rotate(${i * 30}deg)`,
-            }}
+            data-role={TONES[i % TONES.length]}
+            className={
+              'absolute left-1/2 top-1/2 h-[15rem] w-1 origin-top rounded-full opacity-70 ' +
+              'bg-[linear-gradient(to_bottom,var(--ds-accent),transparent)] ' +
+              'rotate-[calc(var(--i)*30deg)]'
+            }
+            /* O ângulo é o índice vezes 30 graus. A variável entra por style —
+               é o valor —, e quem a transforma em rotação é a classe. */
+            style={{ '--i': i } as React.CSSProperties}
           />
         ))}
       </div>
@@ -103,10 +97,12 @@ export function ConsensusBurst({ value, voters, onDone }: Props) {
         {particles.map((p) => (
           <span
             key={p.id}
-            className="consensus-spark absolute font-black"
+            data-role={p.tone}
+            className="consensus-spark absolute font-black text-(--ds-accent)"
+            /* Cada partícula voa para um ângulo e uma distância sorteados. As
+               variáveis alimentam o keyframe; a animação em si é CSS. */
             style={
               {
-                color: p.color,
                 fontSize: p.size,
                 animationDelay: `${p.delay}s`,
                 '--dx': `${p.x}px`,

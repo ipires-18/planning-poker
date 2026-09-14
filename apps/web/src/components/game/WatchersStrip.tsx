@@ -1,5 +1,5 @@
-import { Avatar } from '../ui'
-import { ROLE_ACCENT, ROLE_SHORT, type Player } from '@/types'
+import { Initials } from '@pp/ds/atoms'
+import { ROLE_SHORT, type Player } from '@/types'
 
 interface Props {
   watchers: Player[]
@@ -16,20 +16,18 @@ export function WatchersStrip({ watchers, online, youId }: Props) {
       <span className="uppercase tracking-[0.16em]">Na cerimônia</span>
 
       {watchers.map((player) => {
-        const accent = ROLE_ACCENT[player.role]
         return (
-          <span key={player.id} className="flex items-center gap-1.5">
-            <Avatar
+          <span key={player.id} data-role={player.role} className="flex items-center gap-1.5">
+            <Initials
               name={player.name}
-              color={accent}
-              size={22}
+              role={player.role}
+              size="xs"
               dimmed={!online.has(player.user_id)}
             />
             {player.name}
             {player.user_id === youId && ' (você)'}
             <span
-              className="text-[9px] font-black uppercase tracking-wider"
-              style={{ color: accent }}
+              className="text-[9px] font-black uppercase tracking-wider text-(--ds-accent)"
             >
               {ROLE_SHORT[player.role]}
             </span>

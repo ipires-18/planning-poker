@@ -8,21 +8,26 @@ interface Props {
   disabled: boolean
 }
 
-const RAMP = [
-  'var(--color-mint)',
-  'var(--color-sky)',
-  'var(--color-brand-400)',
-  'var(--color-grape)',
-  'var(--color-punch)',
-]
+/**
+ * A rampa de cor do baralho, em papéis do tema.
+ *
+ * O valor "pesa" mais conforme sobe: começa no verde do Back-End e termina no
+ * rosa do QA, passando pela marca. São os mesmos cinco acentos do resto do
+ * produto, e não uma paleta paralela que ninguém mais usa.
+ */
+const RAMP = ['backend', 'frontend', 'tech_lead', 'qa'] as const
 
-/** Cor em degradê ao longo da escala — o valor "pesa" mais conforme sobe. */
-function hueFor(card: Card, index: number, scoringCount: number): string {
-  if (card.label === PENDING.label) return 'var(--color-coral)'
-  if (card.value === null) return card.label === '☕' ? 'var(--color-zest)' : 'var(--color-ink-subtle)'
+type CardTone = (typeof RAMP)[number] | 'critical' | 'attention' | 'neutral'
+
+/** Que papel (ou estado) pinta esta carta. */
+function toneFor(card: Card, index: number, scoringCount: number): CardTone {
+  if (card.label === PENDING.label) return 'critical'
+  if (card.value === null) return card.label === '☕' ? 'attention' : 'neutral'
   const step = scoringCount > 1 ? index / (scoringCount - 1) : 0
   return RAMP[Math.min(RAMP.length - 1, Math.floor(step * RAMP.length))]
 }
+
+const ROLE_TONES = new Set<string>(RAMP)
 
 export function CardDeck({ scale, selected, onSelect, disabled }: Props) {
   const scoringCount = scale.filter((c) => c.value !== null).length
@@ -46,7 +51,8 @@ export function CardDeck({ scale, selected, onSelect, disabled }: Props) {
       >
         {scale.map((card, index) => {
           const active = selected === card.label
-          const color = hueFor(card, index, scoringCount)
+          const tone = toneFor(card, index, scoringCount)
+          const isRole = ROLE_TONES.has(tone)
           const wide = card.label.length > 2
 
           return (
@@ -57,25 +63,24 @@ export function CardDeck({ scale, selected, onSelect, disabled }: Props) {
               aria-label={card.label}
               disabled={disabled}
               onClick={() => onSelect(card.label)}
+              data-role={isRole ? tone : undefined}
+              data-tone={isRole ? undefined : tone}
               className={cx(
                 'flex shrink-0 items-center justify-center rounded-2xl border-2 font-black',
+                'border-hairline bg-raised text-(--ds-accent)',
                 'transition-all duration-300 [transition-timing-function:var(--ease-spring)]',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400',
                 wide ? 'h-16 px-3 text-[10px] uppercase leading-tight' : 'h-16 text-xl',
                 disabled
                   ? 'cursor-not-allowed opacity-35'
-                  : 'cursor-pointer hover:-translate-y-2 hover:shadow-xl',
-                active && '-translate-y-3 scale-110 border-transparent text-white',
+                  : 'hover:-translate-y-2 hover:shadow-xl',
+                !wide && 'w-13',
+                active && [
+                  '-translate-y-3 scale-110 border-transparent text-white',
+                  'bg-[linear-gradient(145deg,var(--ds-accent),color-mix(in_oklab,var(--ds-accent)_45%,var(--color-brand-700)))]',
+                  'shadow-[0_18px_36px_-14px_var(--ds-accent)]',
+                ],
               )}
-              style={{
-                width: wide ? undefined : '3.25rem',
-                borderColor: active ? 'transparent' : 'var(--surface-border)',
-                background: active
-                  ? `linear-gradient(145deg, ${color}, color-mix(in oklab, ${color} 45%, var(--color-brand-700)))`
-                  : 'var(--surface-raised)',
-                color: active ? '#fff' : color,
-                boxShadow: active ? `0 18px 36px -14px ${color}` : undefined,
-              }}
             >
               {card.label}
             </button>

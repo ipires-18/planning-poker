@@ -1,41 +1,52 @@
 import { cn } from '#lib/utils'
+import type { AccentRole } from '#tokens/index'
+
+/** Degraus fechados, porque avatar em tamanho arbitrário não alinha com nada. */
+export type InitialsSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+
+const SIZE: Record<InitialsSize, string> = {
+  xs: 'size-6 text-[10px]',
+  sm: 'size-7 text-[11px]',
+  md: 'size-9 text-body-sm',
+  lg: 'size-10 text-body',
+  xl: 'size-13 text-title-sm',
+}
 
 /**
- * A inicial de quem não tem foto, num degradê da cor do papel.
+ * A inicial de quem não tem foto, no degradê da cor do papel.
  *
- * Fica ao lado do Avatar do registry em vez de dentro dele: o Avatar do shadcn
- * resolve imagem com fallback, e aqui nunca há imagem — o produto não pede
- * foto a ninguém.
+ * A cor não entra por prop: entra por `data-role`, e o tema resolve. É o que
+ * mantém o mapa papel→cor num lugar só e tira o `style` inline do caminho.
+ *
+ * Fica ao lado do Avatar do registry em vez de dentro dele — o Avatar resolve
+ * imagem com fallback, e aqui nunca há imagem, porque o produto não pede foto
+ * a ninguém.
  */
 export function Initials({
   name,
-  color,
-  size = 40,
+  role,
+  size = 'md',
   dimmed,
   className,
 }: {
   name: string
-  /** Cor do papel: `ROLE_ACCENT[role]`. */
-  color: string
-  size?: number
+  role: AccentRole
+  size?: InitialsSize
   dimmed?: boolean
   className?: string
 }) {
   return (
     <span
       aria-hidden
+      data-role={role}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full font-black text-white',
+        'ds-accent-gradient inline-flex shrink-0 items-center justify-center',
+        'rounded-full font-black text-white',
         'transition-opacity duration-(--duration-scene)',
+        SIZE[size],
         dimmed && 'opacity-40',
         className,
       )}
-      style={{
-        width: size,
-        height: size,
-        fontSize: size * 0.42,
-        background: `linear-gradient(140deg, ${color}, color-mix(in oklab, ${color} 55%, var(--color-brand-600)))`,
-      }}
     >
       {name.trim().charAt(0).toUpperCase() || '?'}
     </span>

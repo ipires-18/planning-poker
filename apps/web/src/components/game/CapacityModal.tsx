@@ -1,8 +1,9 @@
-import { Modal } from '../ui'
+import { Modal } from '@pp/ds/organisms'
 import { CapacityPanel } from '../CapacityPanel'
 import type { SprintWindow } from '@/hooks/useGameActions'
 import type { TeamCapacity } from '@/lib/derive'
-import type { CapacityEntry, Player, Room } from '@/types'
+import { OPTIONAL_VOTERS } from '@/types'
+import type { CapacityEntry, OptionalVoterRole, Player, Room } from '@/types'
 
 interface Props {
   open: boolean
@@ -12,7 +13,8 @@ interface Props {
   capacity: TeamCapacity
   onSaveWindow: (sprint: SprintWindow) => Promise<void>
   onSaveCapacity: (entries: CapacityEntry[]) => Promise<void>
-  onToggleQaVoting: (enabled: boolean) => Promise<void>
+  onToggleOptionalVoter: (role: OptionalVoterRole, enabled: boolean) => Promise<void>
+  onSetDiscussionLimit: (seconds: number) => Promise<void>
 }
 
 export function CapacityModal({
@@ -23,7 +25,8 @@ export function CapacityModal({
   capacity,
   onSaveWindow,
   onSaveCapacity,
-  onToggleQaVoting,
+  onToggleOptionalVoter,
+  onSetDiscussionLimit,
 }: Props) {
   const sprint: SprintWindow = {
     start: room.sprint_start,
@@ -36,9 +39,11 @@ export function CapacityModal({
       <CapacityPanel
         capacity={capacity}
         sprint={sprint}
-        qaVotes={room.qa_votes}
-        qaPresent={players.some((p) => p.role === 'qa')}
-        onToggleQaVoting={(enabled) => void onToggleQaVoting(enabled)}
+        optionalVoters={room.optional_voters}
+        votersPresent={OPTIONAL_VOTERS.filter((papel) => players.some((p) => p.role === papel))}
+        onToggleOptionalVoter={(role, enabled) => void onToggleOptionalVoter(role, enabled)}
+        discussionLimit={room.discussion_limit_seconds}
+        onSetDiscussionLimit={(seconds) => void onSetDiscussionLimit(seconds)}
         onSaveWindow={onSaveWindow}
         onSaveCapacity={async (entries) => {
           await onSaveCapacity(entries)

@@ -39,6 +39,7 @@ const config: Config = {
   themeConfig: {
     navbar: {
       title: 'Planning Poker DS',
+      logo: { alt: 'Planning Poker', src: 'img/logo.svg', width: 52, height: 23 },
       items: [
         { to: '/fundamentos/style-guide', label: 'Fundamentos', position: 'left' },
         { to: '/componentes/atomos', label: 'Componentes', position: 'left' },

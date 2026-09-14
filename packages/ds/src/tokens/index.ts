@@ -6,25 +6,73 @@
  * escala, os nomes que a documentação lista.
  */
 
-export const ROLE_ACCENT = {
-  po: 'var(--color-zest)',
-  tech_lead: 'var(--color-grape)',
-  frontend: 'var(--color-sky)',
-  backend: 'var(--color-mint)',
-  qa: 'var(--color-punch)',
-} as const
+/** Os degraus de toda rampa do DS, na ordem. */
+export const RAMP_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const
 
-export type AccentRole = keyof typeof ROLE_ACCENT
+/**
+ * As rampas de cor e o que cada uma significa.
+ *
+ * O valor de cada degrau não está aqui — está no CSS, que é onde o tema troca
+ * sem recompilar. O que sobe para o TypeScript é o nome e o sentido, que é do
+ * que a vitrine e a lógica precisam. Ler um degrau é `var(--color-mint-300)`.
+ */
+export const PALETTES = [
+  { name: 'brand', label: 'Marca', means: 'Ação, identidade, foco' },
+  { name: 'grape', label: 'Uva', means: 'Tech Lead' },
+  { name: 'sky', label: 'Ciano', means: 'Front-End' },
+  { name: 'mint', label: 'Verde', means: 'Back-End, e o positivo: dentro do limite' },
+  { name: 'zest', label: 'Âmbar', means: 'Product Owner, e a atenção: perto do teto' },
+  { name: 'punch', label: 'Rosa', means: 'QA, destaque quente' },
+  { name: 'iris', label: 'Azul', means: 'Designer' },
+  { name: 'lime', label: 'Limão', means: 'Produto — a cadeira do negócio' },
+  { name: 'coral', label: 'Coral', means: 'Erro, estouro, ação destrutiva' },
+] as const
 
-/** Semânticos: o que a cor quer dizer, não como ela é. */
-export const FEEDBACK = {
-  positive: 'var(--color-mint)',
-  attention: 'var(--color-zest)',
-  critical: 'var(--color-coral)',
-  brand: 'var(--color-brand-500)',
-} as const
+export type PaletteName = (typeof PALETTES)[number]['name']
 
-export type Feedback = keyof typeof FEEDBACK
+/**
+ * Papel na cerimônia → rampa. Espelha o `[data-role]` do tema.
+ *
+ * Componente nenhum consulta este mapa: quem pinta é o CSS, a partir do
+ * atributo. Ele existe para a documentação poder listar a correspondência, e
+ * para o tipo do papel ter um lugar só.
+ */
+export const ROLE_PALETTE = {
+  po: 'zest',
+  tech_lead: 'grape',
+  frontend: 'sky',
+  backend: 'mint',
+  qa: 'punch',
+  designer: 'iris',
+  product: 'lime',
+} as const satisfies Record<string, PaletteName>
+
+export type AccentRole = keyof typeof ROLE_PALETTE
+
+/** Estado → rampa. O outro eixo de cor, espelhando o `[data-tone]`. */
+export const TONE_PALETTE = {
+  brand: 'brand',
+  positive: 'mint',
+  attention: 'zest',
+  critical: 'coral',
+} as const satisfies Record<string, PaletteName>
+
+export type Tone = keyof typeof TONE_PALETTE | 'neutral'
+
+/**
+ * As variantes que todo tom oferece, e para que serve cada uma.
+ *
+ * Este é o contrato do Preline traduzido: quem declara um tom ganha estes seis
+ * valores de graça, já resolvidos para claro e escuro.
+ */
+export const TONE_VARIANTS = [
+  { token: '--ds-accent', use: 'A cor em repouso — fundo cheio, número, traço forte' },
+  { token: '--ds-accent-hover', use: 'Mouse em cima' },
+  { token: '--ds-accent-active', use: 'Pressionado' },
+  { token: '--ds-accent-ink', use: 'A cor como texto, legível sobre o fundo do tema' },
+  { token: '--ds-accent-soft', use: 'Fundo lavado — selo, realce, variante soft' },
+  { token: '--ds-accent-line', use: 'Traço e anel de foco' },
+] as const
 
 /** A escala tipográfica, na ordem, para a página de estilo listar. */
 export const TYPE_SCALE = [

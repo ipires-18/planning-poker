@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ErrorNote } from '../ui'
+import { Note } from '@pp/ds/atoms'
 import { RoomHeader } from '../RoomHeader'
 import { Roster } from '../Roster'
 import { CardDeck } from '../CardDeck'
@@ -79,7 +79,7 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
 
       {actions.error && (
         <div className="px-4 pt-3 sm:px-6">
-          <ErrorNote>{actions.error}</ErrorNote>
+          <Note>{actions.error}</Note>
         </div>
       )}
 
@@ -114,6 +114,7 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
                     story={currentStory}
                     side={room.current_side}
                     isHost={view.isHost}
+                    discussionLimit={room.discussion_limit_seconds}
                     onKindChange={(kind) => void actions.setStoryKind(currentStory.id, kind)}
                     onStartTimer={() => void actions.startTimer(currentStory.id)}
                   />
@@ -200,7 +201,8 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
         capacity={view.capacity}
         onSaveWindow={actions.setSprintWindow}
         onSaveCapacity={actions.setCapacity}
-        onToggleQaVoting={actions.setQaVoting}
+        onToggleOptionalVoter={actions.setOptionalVoter}
+        onSetDiscussionLimit={actions.setDiscussionLimit}
       />
     </div>
   )

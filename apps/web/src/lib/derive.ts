@@ -1,6 +1,7 @@
 import { windowStats, type WindowStats } from './holidays'
 import { safeUrl } from './links'
 import { roleScores, roleVotes } from '@/types'
+import type { OptionalVoterRole } from '@/types'
 import type { Player, RoomState, Story, StoryParticipant, VotingSide } from '@/types'
 
 export interface ScoredStory {
@@ -24,13 +25,13 @@ export function scorersOf(players: Player[]): Player[] {
 }
 
 /** Quem tem baralho na mão nesta sala. */
-export function votersOf(players: Player[], qaVotes: boolean): Player[] {
-  return players.filter((p) => roleVotes(p.role, qaVotes))
+export function votersOf(players: Player[], optionalVoters: OptionalVoterRole[]): Player[] {
+  return players.filter((p) => roleVotes(p.role, optionalVoters))
 }
 
-/** Quem está na cerimônia sem carta: o PO, e a QA quando ela não vota. */
-export function watchersOf(players: Player[], qaVotes: boolean): Player[] {
-  return players.filter((p) => !roleVotes(p.role, qaVotes))
+/** Quem está na cerimônia sem carta: o PO, e o convidado que não recebeu baralho. */
+export function watchersOf(players: Player[], optionalVoters: OptionalVoterRole[]): Player[] {
+  return players.filter((p) => !roleVotes(p.role, optionalVoters))
 }
 
 /** Quebra dos pontos por pessoa, na ordem do ranking. */
@@ -38,9 +39,7 @@ export function summarize(state: RoomState): PlayerSummary[] {
   const byStory = new Map<string, Story>(state.stories.map((s) => [s.id, s]))
 
   const rows = scorersOf(state.players).map((player) => {
-    const mine = state.participants.filter(
-      (p: StoryParticipant) => p.player_id === player.id,
-    )
+    const mine = state.participants.filter((p: StoryParticipant) => p.player_id === player.id)
 
     const stories: ScoredStory[] = mine
       .map((participation) => {
@@ -101,7 +100,6 @@ export function summaryAsText(summaries: PlayerSummary[]): string {
 /* -------------------------------------------------------------------------- */
 /* Capacidade                                                                  */
 /* -------------------------------------------------------------------------- */
-
 
 export interface CapacityRow {
   player: Player

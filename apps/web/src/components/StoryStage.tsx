@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Badge, Button, Select } from './ui'
+import { Badge, Button, Note, Select } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import { formatClock } from '@/lib/holidays'
 import { safeUrl } from '@/lib/links'
-import { KIND_LABEL, type Story, type StoryKind, type VotingSide } from '@/types'
-
-const SIDE_COLOR: Record<VotingSide, string> = {
-  frontend: 'var(--color-sky)',
-  backend: 'var(--color-mint)',
-}
+import {
+  KIND_LABEL,
+  SIDE_TONE,
+  type PlayerRole,
+  type Story,
+  type StoryKind,
+  type VotingSide,
+} from '@/types'
 
 /* -------------------------------------------------------------------------- */
 
@@ -54,11 +56,20 @@ interface StageProps {
   story: Story
   side: VotingSide
   isHost: boolean
+  /** Timebox combinado para a sala, em segundos. 0 = sem aviso. */
+  discussionLimit: number
   onKindChange: (kind: StoryKind) => void
   onStartTimer: () => void
 }
 
-export function StoryStage({ story, side, isHost, onKindChange, onStartTimer }: StageProps) {
+export function StoryStage({
+  story,
+  side,
+  isHost,
+  discussionLimit,
+  onKindChange,
+  onStartTimer,
+}: StageProps) {
   const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
@@ -69,6 +80,9 @@ export function StoryStage({ story, side, isHost, onKindChange, onStartTimer }: 
     const id = window.setInterval(tick, 1000)
     return () => window.clearInterval(id)
   }, [story.started_at, story.ended_at])
+
+  const temLimite = discussionLimit > 0
+  const estourou = temLimite && Boolean(story.started_at) && !story.ended_at && elapsed > discussionLimit
 
   const link = safeUrl(story.link)
   const both = story.kind === 'both'
@@ -83,8 +97,21 @@ export function StoryStage({ story, side, isHost, onKindChange, onStartTimer }: 
     <div className="card-surface p-6">
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="min-w-0 flex-1">
+          {/* O ticket vem antes de tudo: é o que a pessoa abre para entender a
+              história, e no meio dos selos ele virava enfeite no fim da linha. */}
+          {link && (
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-2 inline-flex items-center gap-1 text-xs font-bold text-ink-subtle underline-offset-4 transition-colors hover:text-brand-400 hover:underline"
+            >
+              abrir ticket ↗
+            </a>
+          )}
+
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Badge color={SIDE_COLOR[side]}>
+            <Badge role={SIDE_TONE[side]}>
               Votando {side === 'frontend' ? 'Front-End' : 'Back-End'}
             </Badge>
 
@@ -93,25 +120,16 @@ export function StoryStage({ story, side, isHost, onKindChange, onStartTimer }: 
                 value={story.kind}
                 onChange={(e) => onKindChange(e.target.value as StoryKind)}
                 aria-label="Tipo da história"
-                className="w-auto px-2 py-1 text-[10px] font-black uppercase tracking-wider"
+                size="sm"
+                fullWidth={false}
+                className="text-overline uppercase tracking-(--tracking-overline)"
               >
                 <option value="both">{KIND_LABEL.both}</option>
                 <option value="frontend">{KIND_LABEL.frontend}</option>
                 <option value="backend">{KIND_LABEL.backend}</option>
               </Select>
             ) : (
-              <Badge color="var(--color-grape)">{KIND_LABEL[story.kind]}</Badge>
-            )}
-
-            {link && (
-              <a
-                href={link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-ink-subtle underline-offset-4 transition-colors hover:text-brand-400 hover:underline"
-              >
-                abrir ticket ↗
-              </a>
+              <Badge role="tech_lead">{KIND_LABEL[story.kind]}</Badge>
             )}
           </div>
 
@@ -123,62 +141,78 @@ export function StoryStage({ story, side, isHost, onKindChange, onStartTimer }: 
         {/* Placar da história */}
         <div className="flex items-center gap-4">
           {(both || story.kind === 'frontend') && (
-            <Score label="Front" value={front} color={SIDE_COLOR.frontend} />
+            <Score label="Front" value={front} role="frontend" />
           )}
           {(both || story.kind === 'backend') && (
-            <Score label="Back" value={back} color={SIDE_COLOR.backend} />
+            <Score label="Back" value={back} role="backend" />
           )}
           {both && totalPoints !== null && (
-            <Score label="Total" value={totalPoints} color="var(--color-brand-400)" strong />
+            <Score label="Total" value={totalPoints} tone="brand" strong />
           )}
         </div>
       </div>
 
       {/* Cronômetro */}
-      <div className="mt-5 border-t border-hairline pt-4">
+      <div className="mt-5 space-y-3 border-t border-hairline pt-4">
         {story.started_at ? (
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-zest" />
+          <div data-tone={estourou ? 'critical' : 'attention'} className="flex items-center gap-2">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-(--ds-accent)" />
             <span className="text-[10px] font-black uppercase tracking-[0.16em] text-ink-subtle">
               Discutindo há
             </span>
-            <span className="font-mono text-base font-black text-zest">
+            <span className="font-mono text-base font-black text-(--ds-accent)">
               {formatClock(elapsed)}
             </span>
+            {temLimite && !estourou && (
+              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-ink-subtle">
+                de {formatClock(discussionLimit)}
+              </span>
+            )}
           </div>
-        ) : isHost ? (
-          <Button size="sm" variant="secondary" onClick={onStartTimer}>
+        ) : (
+          /* Qualquer pessoa da mesa começa a contar: quem percebe que a
+             discussão engrenou costuma ser quem está discutindo. */
+          <Button size="sm" variant="white" onClick={onStartTimer}>
             ⏱ Iniciar cronômetro
           </Button>
-        ) : (
-          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-ink-subtle">
-            Cronômetro parado
-          </span>
+        )}
+
+        {estourou && (
+          <Note tone="critical" className="animate-nudge">
+            <strong>Discussão longa.</strong> Já são {formatClock(elapsed)} nesta história, e o
+            time combinou {formatClock(discussionLimit)}. Anote a dúvida, vote com o que se
+            sabe e siga — dá para revisitar depois sem travar a planning.
+          </Note>
         )}
       </div>
     </div>
   )
 }
 
+/** Um lado do placar da história. A cor vem do papel, resolvida pelo tema. */
 function Score({
   label,
   value,
-  color,
+  role,
+  tone,
   strong,
 }: {
   label: string
   value: number | string
-  color: string
+  role?: PlayerRole
+  tone?: 'brand'
   strong?: boolean
 }) {
   return (
-    <div className="flex flex-col items-end">
-      <span className="text-[9px] font-black uppercase tracking-[0.14em] text-ink-subtle">
+    <div data-role={role} data-tone={role ? undefined : tone} className="flex flex-col items-end">
+      <span className="text-[9px] font-black uppercase tracking-(--tracking-overline) text-ink-subtle">
         {label}
       </span>
       <span
-        className={cx('font-black leading-none', strong ? 'text-2xl' : 'text-xl')}
-        style={{ color }}
+        className={cx(
+          'font-black leading-none text-(--ds-accent)',
+          strong ? 'text-title' : 'text-title-sm',
+        )}
       >
         {value}
       </span>

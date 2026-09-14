@@ -1,13 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, ErrorNote, Field, Input, Spinner } from '@/components/ui'
+import { Button, Input, Note, Spinner } from '@pp/ds/atoms'
+import { Field } from '@pp/ds/molecules'
 import { cx } from '@/lib/cx'
 import { joinRoom } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { ROLE_ACCENT, ROLE_LABEL, type PlayerRole } from '@/types'
+import { ROLE_LABEL, type PlayerRole } from '@/types'
 
-const PICKABLE: PlayerRole[] = ['frontend', 'backend', 'tech_lead', 'qa']
+/**
+ * As cadeiras que alguém escolhe ao entrar. O PO não está aqui porque quem cria
+ * a sessão já senta como PO — ninguém "vira" PO entrando depois.
+ */
+const PICKABLE: PlayerRole[] = [
+  'frontend',
+  'backend',
+  'tech_lead',
+  'qa',
+  'designer',
+  'product',
+]
 
 export default function JoinRoom() {
   const { roomId = '' } = useParams()
@@ -59,7 +71,7 @@ export default function JoinRoom() {
         .maybeSingle()
 
       if (cancelled) return
-      if (seat) navigate(`/sala/${roomId}`, { replace: true })
+      if (seat) navigate(`/room/${roomId}`, { replace: true })
       else setChecking(false)
     })()
 
@@ -76,7 +88,7 @@ export default function JoinRoom() {
     setError('')
     try {
       await joinRoom(roomId, name.trim(), role)
-      navigate(`/sala/${roomId}`, { replace: true })
+      navigate(`/room/${roomId}`, { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não deu para entrar')
       setJoining(false)
@@ -135,21 +147,14 @@ export default function JoinRoom() {
                       type="button"
                       onClick={() => setRole(option)}
                       aria-pressed={active}
+                      data-role={option}
                       className={cx(
-                        'cursor-pointer rounded-2xl border-2 p-4 text-left transition-all duration-300',
+                        'rounded-2xl border-2 p-4 text-left transition-all duration-300',
                         '[transition-timing-function:var(--ease-spring)]',
                         active
-                          ? 'scale-[1.03] border-transparent text-white'
-                          : 'border-hairline bg-[var(--surface-sunken)] text-ink-muted hover:border-brand-400/50',
+                          ? 'ds-accent-gradient scale-[1.03] border-transparent text-white shadow-[0_14px_30px_-14px_var(--ds-accent)]'
+                          : 'border-hairline bg-sunken text-ink-muted hover:border-brand-400/50',
                       )}
-                      style={
-                        active
-                          ? {
-                              background: `linear-gradient(140deg, ${ROLE_ACCENT[option]}, color-mix(in oklab, ${ROLE_ACCENT[option]} 55%, var(--color-brand-600)))`,
-                              boxShadow: `0 14px 30px -14px ${ROLE_ACCENT[option]}`,
-                            }
-                          : undefined
-                      }
                     >
                       <span className="block text-sm font-black">{ROLE_LABEL[option]}</span>
                     </button>
@@ -157,22 +162,23 @@ export default function JoinRoom() {
                 })}
               </div>
               <p className="mt-3 text-xs leading-relaxed text-ink-subtle">
-                Tech Lead também revela cartas e fecha a pontuação. A QA acompanha a
-                cerimônia sem receber story points — se ela vota ou não é o PO ou o
-                Tech Lead quem decide.
+                Tech Lead também revela cartas e fecha a pontuação. QA, Designer e
+                Produto acompanham a cerimônia sem receber story points — se cada um
+                vota ou não é o PO ou o Tech Lead quem decide. Produto é a cadeira de
+                quem vem do negócio nesta sprint.
               </p>
             </fieldset>
 
-            <ErrorNote>{error}</ErrorNote>
+            <Note>{error}</Note>
 
-            <Button type="submit" variant="joy" size="lg" isDisabled={joining} className="w-full">
+            <Button type="submit" variant="joy-mirror" size="lg" isDisabled={joining} className="w-full">
               {joining ? 'Puxando a cadeira...' : 'Sentar à mesa'}
             </Button>
           </form>
         ) : (
           <div className="space-y-5 text-center">
-            <ErrorNote>{error}</ErrorNote>
-            <Button variant="secondary" onClick={() => navigate('/')} className="w-full">
+            <Note>{error}</Note>
+            <Button variant="white" onClick={() => navigate('/')} className="w-full">
               Voltar ao início
             </Button>
           </div>

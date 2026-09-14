@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Planning Poker">
+  <title>Planning Poker</title>
+  <defs>
+    <linearGradient id="c0" x1="0" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#06b6d4"/><stop offset="1" stop-color="#5274c7"/></linearGradient>
+    <linearGradient id="c1" x1="0" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#803cd6"/></linearGradient>
+    <linearGradient id="c2" x1="0" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#ec4899"/><stop offset="1" stop-color="#a041aa"/></linearGradient>
+  </defs>
+    <g transform="translate(68 139) rotate(-21)"><rect x="-56.0" y="-81.0" width="112" height="162" rx="24" fill="url(#c0)" stroke="#ffffff" stroke-width="7" stroke-opacity="0.92"/></g>
+    <g transform="translate(128 130) rotate(0)"><rect x="-56.0" y="-81.0" width="112" height="162" rx="24" fill="url(#c1)" stroke="#ffffff" stroke-width="7" stroke-opacity="0.92"/></g>
+    <g transform="translate(188 139) rotate(21)"><rect x="-56.0" y="-81.0" width="112" height="162" rx="24" fill="url(#c2)" stroke="#ffffff" stroke-width="7" stroke-opacity="0.92"/></g>
+</svg>

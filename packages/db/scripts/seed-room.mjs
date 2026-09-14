@@ -117,8 +117,9 @@ async function actor({ name, role, pick }) {
     return
   }
 
-  // A QA só tem baralho se a sala estiver configurada para isso; o PO nunca tem.
-  const votes = role === 'po' ? false : role === 'qa' ? state.qa_votes : true
+  // Quem não pontua só tem baralho se a sala estiver configurada para isso.
+  const OPCIONAIS = ['po', 'qa', 'designer', 'product']
+  const votes = OPCIONAIS.includes(role) ? state.optional_voters.includes(role) : true
   if (!votes) {
     console.log(`  ${name} (${role}) entrou — acompanha sem votar`)
     return
@@ -144,7 +145,7 @@ for (const member of CAST) {
 }
 
 console.log(`\n✓ Mesa pronta.`)
-console.log(`  Entrar:     ${APP_URL}/entrar/${roomId}`)
+console.log(`  Entrar:     ${APP_URL}/join/${roomId}`)
 if (!requested) {
   console.log(`\n  O PO desta sala é o script, não você — para revelar as cartas,`)
   console.log(`  entre como Tech Lead, que tem os mesmos poderes.`)

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Spinner } from '@/components/ui'
+import { Spinner } from '@pp/ds/atoms'
 import { RoomNotFound } from '@/components/game/RoomNotFound'
 import { GameScreen } from '@/components/game/GameScreen'
 import { useAuth } from '@/hooks/useAuth'
@@ -24,7 +24,7 @@ export default function Game() {
   useEffect(() => {
     if (loading || !ready || !state) return
     // Sem cadeira nesta sala? Passe pela porta da frente.
-    if (!iAmSeated) navigate(`/entrar/${roomId}`, { replace: true })
+    if (!iAmSeated) navigate(`/join/${roomId}`, { replace: true })
   }, [loading, ready, state, iAmSeated, roomId, navigate])
 
   useEffect(() => {

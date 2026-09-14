@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Button, Modal } from '../ui'
+import { Button } from '@pp/ds/atoms'
+import { Modal } from '@pp/ds/organisms'
 import { StoryEditor, StoryQueue, type QueueItem, type StoryEdit } from '../StoryQueue'
 import { moveById } from '@/lib/arrays'
 import type { Room, Story } from '@/types'
@@ -56,15 +57,21 @@ export function StoriesModal({
   }
 
   return (
-    <Modal open={open} onClose={close} title="Histórias da sprint">
+    <Modal open={open} onClose={close} title="Histórias da sprint" size="lg">
       <div className="space-y-5">
         <p className="text-xs text-ink-subtle">
           As já pontuadas ficam travadas no lugar — mexer nelas mudaria o resumo da
-          sessão. A fila pendente você reordena com ▲▼.
+          sessão. A fila pendente você reordena arrastando pela alça.
         </p>
 
         <div className="max-h-[45vh] overflow-y-auto pr-1">
-          <StoryQueue items={items} onEdit={onEdit} onDelete={onRemove} onMove={move} />
+          <StoryQueue
+            items={items}
+            onEdit={onEdit}
+            onDelete={onRemove}
+            onMove={move}
+            onReorder={onReorder}
+          />
         </div>
 
         {adding ? (
@@ -80,7 +87,7 @@ export function StoriesModal({
             />
           </div>
         ) : (
-          <Button variant="secondary" className="w-full" onClick={() => setAdding(true)}>
+          <Button variant="white" className="w-full" onClick={() => setAdding(true)}>
             + Nova história
           </Button>
         )}

@@ -1,7 +1,8 @@
+import { Initials } from '@pp/ds/atoms'
 import { useState } from 'react'
-import { Avatar, Button } from '../ui'
+import { Button } from '@pp/ds/atoms'
 import { formatShort, fromISODate, toISODate } from '@/lib/holidays'
-import { ROLE_ACCENT, type Room, type Story } from '@/types'
+import type { Room, Story } from '@/types'
 import type { PlayerSummary } from '@/lib/derive'
 
 interface Props {
@@ -81,7 +82,7 @@ export function PausedScreen({
                   key={player.id}
                   className="flex items-center gap-2 rounded-xl bg-[var(--surface-sunken)] px-3 py-2"
                 >
-                  <Avatar name={player.name} color={ROLE_ACCENT[player.role]} size={24} />
+                  <Initials name={player.name} role={player.role} size="xs" />
                   <span className="text-xs font-bold text-ink">{player.name}</span>
                   <span className="text-xs font-black text-ink-muted">{total}</span>
                 </li>
@@ -124,7 +125,7 @@ export function PausedScreen({
 
       <div className="mt-6 space-y-3">
         {isHost ? (
-          <Button variant="joy" size="lg" className="w-full" onClick={resume} isDisabled={busy}>
+          <Button variant="solid" size="lg" className="w-full" onClick={resume} isDisabled={busy}>
             {busy ? 'Abrindo a mesa...' : '▶ Retomar de onde paramos'}
           </Button>
         ) : (
@@ -133,7 +134,7 @@ export function PausedScreen({
           </p>
         )}
 
-        <Button variant="secondary" size="lg" className="w-full" onClick={onLeave}>
+        <Button variant="white" size="lg" className="w-full" onClick={onLeave}>
           Voltar ao início
         </Button>
 

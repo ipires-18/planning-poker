@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Input } from './ui'
+import { Input } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import {
   DECKS,

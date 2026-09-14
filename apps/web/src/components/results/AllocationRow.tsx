@@ -1,5 +1,6 @@
-import { Avatar, Input } from '../ui'
-import { ROLE_ACCENT, ROLE_SHORT, type Player } from '@/types'
+import { Initials } from '@pp/ds/atoms'
+import { Input } from '@pp/ds/atoms'
+import { ROLE_SHORT, type Player } from '@/types'
 
 interface Props {
   player: Player
@@ -10,17 +11,17 @@ interface Props {
 }
 
 export function AllocationRow({ player, points, pendingMode, onChange }: Props) {
-  const accent = ROLE_ACCENT[player.role]
-
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl bg-[var(--surface-sunken)] p-3">
+    <div
+      data-role={player.role}
+      className="flex items-center justify-between gap-4 rounded-[var(--radius-card)] bg-sunken p-3"
+    >
       <div className="flex min-w-0 items-center gap-3">
-        <Avatar name={player.name} color={accent} size={34} />
+        <Initials name={player.name} role={player.role} size="md" />
         <div className="min-w-0">
           <p className="truncate text-sm font-bold text-ink">{player.name}</p>
           <span
-            className="text-[10px] font-black uppercase tracking-wider"
-            style={{ color: accent }}
+            className="text-overline font-black uppercase tracking-(--tracking-overline) text-(--ds-accent)"
           >
             {ROLE_SHORT[player.role]}
           </span>

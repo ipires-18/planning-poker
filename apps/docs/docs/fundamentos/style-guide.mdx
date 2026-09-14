@@ -14,64 +14,162 @@ valor. É o que faz o modo escuro existir sem duplicar componente nenhum.
 
 ## Cor
 
-### Marca
+### As rampas
 
-A escala 400/500/600 é a que aparece de fato: **500** é a cor de ação, **400** o
-realce sobre fundo escuro, **600** o estado pressionado.
+São sete: a da marca e seis acentos. Cada uma é uma rampa inteira de onze
+degraus, e não um tom solto — é o que permite a um mesmo significado ter fundo
+lavado, traço, texto legível e estado pressionado sem ninguém inventar cor na
+hora.
+
+As rampas não foram escolhidas a olho. São derivadas da curva da marca em
+**OKLCH**: cada degrau repete o passo de luminosidade e a proporção de croma que
+a marca tem naquele degrau, mantendo o matiz da cor e ancorando o **500** no tom
+original. Por isso `mint-200` e `grape-200` pesam o mesmo na tela — coisa que
+rampas escolhidas uma a uma quase nunca conseguem.
 
 ```jsx live
-function EscalaDaMarca() {
-  const degraus = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
+function Rampas() {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-      {degraus.map((n) => (
-        <div key={n} style={{ textAlign: 'center' }}>
-          <div
+    <div style={{ display: 'grid', gap: 18 }}>
+      {PALETTES.map((p) => (
+        <div key={p.name}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
+            <strong style={{ fontSize: 14 }}>{p.name}</strong>
+            <span style={{ fontSize: 12, opacity: 0.7 }}>{p.means}</span>
+          </div>
+          <div style={{ display: 'flex', borderRadius: 10, overflow: 'hidden' }}>
+            {RAMP_STEPS.map((n) => (
+              <div
+                key={n}
+                title={`--color-${p.name}-${n}`}
+                style={{
+                  flex: 1,
+                  height: 46,
+                  background: `var(--color-${p.name}-${n})`,
+                  color: n >= 500 ? '#fff' : 'rgba(0,0,0,.55)',
+                  fontSize: 9,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'center',
+                  paddingBottom: 3,
+                }}
+              >
+                {n}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+### Papel e estado
+
+Cor aqui não é decoração: cada acento carrega um significado fixo, e trocar o
+acento de um papel troca o que a pessoa entende. O mapa mora no tema, em CSS —
+quem usa declara o papel num atributo e lê o acento, sem nunca saber que
+Front-End é ciano.
+
+```jsx live
+function PapelEEstado() {
+  return (
+    <div style={{ display: 'grid', gap: 20 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
+        {Object.entries(ROLE_PALETTE).map(([papel, rampa]) => (
+          <div key={papel} style={{ textAlign: 'center' }}>
+            <Initials name={papel.replace('_', ' ')} role={papel} size="xl" />
+            <div style={{ fontSize: 11, marginTop: 6 }}>
+              <code>{papel}</code>
+            </div>
+            <div style={{ fontSize: 10, opacity: 0.6 }}>{rampa}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {Object.keys(TONE_PALETTE).map((tom) => (
+          <span
+            key={tom}
+            data-tone={tom}
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: 12,
-              background: `var(--color-brand-${n})`,
+              background: 'var(--ds-accent-soft)',
+              color: 'var(--ds-accent-ink)',
+              border: '1px solid var(--ds-accent-line)',
+              borderRadius: 999,
+              padding: '6px 14px',
+              fontSize: 12,
+              fontWeight: 700,
             }}
-          />
-          <small style={{ fontSize: 11 }}>{n}</small>
-        </div>
-      ))}
+          >
+            {tom}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
 ```
 
-### Acentos
+### As variantes de um tom
 
-Cada acento carrega um significado fixo no produto. **Não são cores
-decorativas**: trocar o acento de um papel troca o que a pessoa entende.
+Declarar um papel ou um estado entrega seis valores prontos, já resolvidos para
+claro e escuro — é o contrato do Preline traduzido para o nosso tema. Nenhum
+componente precisa saber qual rampa está por trás: ele lê `--ds-accent-ink` e
+pronto.
 
 ```jsx live
-function Acentos() {
-  const papeis = {
-    po: 'Product Owner',
-    tech_lead: 'Tech Lead',
-    frontend: 'Front-End',
-    backend: 'Back-End',
-    qa: 'QA',
-  }
+function Variantes() {
+  const [tom, setTom] = React.useState('critical')
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-      {Object.entries(papeis).map(([papel, nome]) => (
-        <div key={papel} style={{ textAlign: 'center' }}>
-          <Initials name={nome} color={ROLE_ACCENT[papel]} size={52} />
-          <div style={{ fontSize: 11, marginTop: 6 }}>{nome}</div>
-        </div>
-      ))}
+    <div data-tone={tom} style={{ display: 'grid', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {['brand', 'positive', 'attention', 'critical', 'neutral'].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTom(t)}
+            style={{
+              cursor: 'pointer',
+              borderRadius: 8,
+              border: '1px solid var(--color-hairline, #ddd)',
+              background: t === tom ? 'var(--ds-accent-soft)' : 'transparent',
+              padding: '4px 10px',
+              fontSize: 12,
+            }}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      <table style={{ fontSize: 12 }}>
+        <tbody>
+          {TONE_VARIANTS.map((v) => (
+            <tr key={v.token}>
+              <td style={{ width: 40 }}>
+                <span
+                  style={{
+                    display: 'block',
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    background: `var(${v.token})`,
+                    border: '1px solid rgba(0,0,0,.08)',
+                  }}
+                />
+              </td>
+              <td>
+                <code>{v.token}</code>
+              </td>
+              <td style={{ opacity: 0.75 }}>{v.use}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
 ```
-
-Há também os semânticos, que falam do estado e não do papel: `positive`
-(dentro do limite), `attention` (perto do teto), `critical` (estouro ou erro) e
-`brand` (ação).
 
 ## Tipografia
 

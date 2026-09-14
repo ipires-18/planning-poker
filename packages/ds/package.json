@@ -10,7 +10,8 @@
     "#molecules/*": "./src/molecules/*.tsx",
     "#organisms/*": "./src/organisms/*.tsx",
     "#lib/*": "./src/lib/*.ts",
-    "#hooks/*": "./src/hooks/*.ts"
+    "#hooks/*": "./src/hooks/*.ts",
+    "#tokens/*": "./src/tokens/*.ts"
   },
   "exports": {
     "./styles.css": "./src/styles/globals.css",

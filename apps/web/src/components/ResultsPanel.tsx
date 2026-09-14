@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Button, Select } from './ui'
+import { Button, Select } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import { ConsensusBurst } from './ConsensusBurst'
 import { VoteTally } from './results/VoteTally'
@@ -14,7 +14,7 @@ interface Props {
   /** Baralho em uso na sala — define o que cada carta vale. */
   scale: Card[]
   votes: CastVote[]
-  /** Quem pode receber pontos — PO e QA acompanham, não pontuam. */
+  /** Quem pode receber pontos — PO e convidados acompanham, não pontuam. */
   scorers: Player[]
   /** Quantas pessoas tinham baralho nesta rodada. */
   voterCount: number
@@ -193,7 +193,7 @@ function ConfirmBar({
   return (
     <div className="flex gap-3">
       <Button
-        variant="joy"
+        variant="solid"
         size="lg"
         className="flex-1"
         isDisabled={!isBalanced || saving}
@@ -201,7 +201,7 @@ function ConfirmBar({
       >
         {label}
       </Button>
-      <Button variant="danger" size="lg" onClick={onReset} aria-label="Votar de novo">
+      <Button variant="soft" tone="critical" size="lg" onClick={onReset} aria-label="Votar de novo">
         ↺
       </Button>
     </div>

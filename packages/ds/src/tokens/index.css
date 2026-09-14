@@ -10,7 +10,7 @@
    decide o valor. É o que faz o modo escuro existir sem duplicar componente.
    ============================================================================ */
 
-@theme {
+@theme static {
   /* ------------------------------------------------------------------------
      Cor — marca
      A escala 400/500/600 é a que aparece: 500 é a cor de ação, 400 o realce
@@ -27,28 +27,163 @@
   --color-brand-800: #4c1d95;
   --color-brand-900: #2e1065;
   --color-brand-950: #1a0b3d;
+}
 
+/* ============================================================================
+   Rampas dos acentos
+   ============================================================================
+   Em bloco `static` de propósito: o Tailwind v4 só emite a variável de tema que
+   alguma classe usa, e as rampas também são lidas em tempo de execução — pelas
+   receitas de tom mais abaixo e pela vitrine do DS. Sem `static`, `mint-50`
+   simplesmente não existiria no CSS final até alguém escrever `bg-mint-50`.
+   ============================================================================ */
+
+@theme static {
   /* ------------------------------------------------------------------------
      Cor — acentos
      Cada um carrega um significado fixo no produto. Não são cores decorativas:
      trocar o acento de um papel troca o que a pessoa entende.
-     ------------------------------------------------------------------------ */
-  --color-punch: #ec4899; /* rosa   — QA, destaque quente */
-  --color-zest: #f59e0b; /* âmbar  — PO, atenção, "quase no limite" */
-  --color-mint: #10b981; /* verde  — Back-End, sucesso, dentro do limite */
-  --color-sky: #06b6d4; /* ciano  — Front-End */
-  --color-grape: #a855f7; /* uva    — Tech Lead */
-  --color-coral: #fb7185; /* coral  — erro, estouro, destrutivo */
 
+     Cada acento é uma rampa inteira, e não um tom solto — é o que permite a um
+     mesmo significado ter fundo lavado, traço, texto legível e estado
+     pressionado sem ninguém inventar cor na hora.
+
+     As rampas não foram escolhidas a olho: são derivadas da curva da marca em
+     OKLCH. Cada degrau repete o passo de luminosidade e a proporção de croma
+     que a marca tem naquele degrau, mantendo o matiz da cor e ancorando o 500
+     no tom original. Por isso `mint-200` e `grape-200` pesam o mesmo na tela,
+     coisa que rampas escolhidas uma a uma quase nunca conseguem.
+     ------------------------------------------------------------------------ */
+  /* punch — ancorada em #ec4899 (degrau 500) */
+  --color-punch-50: #fff2f6;
+  --color-punch-100: #ffe5ee;
+  --color-punch-200: #ffcddf;
+  --color-punch-300: #ffa7ca;
+  --color-punch-400: #fc76b1;
+  --color-punch-500: #ec4899;
+  --color-punch-600: #d73788;
+  --color-punch-700: #b83175;
+  --color-punch-800: #9b2e64;
+  --color-punch-900: #6e2046;
+  --color-punch-950: #4a1b30;
+
+  /* zest — ancorada em #f59e0b (degrau 500) */
+  --color-zest-50: #fcf4ec;
+  --color-zest-100: #fceede;
+  --color-zest-200: #fce1c2;
+  --color-zest-300: #fdcd96;
+  --color-zest-400: #fdb459;
+  --color-zest-500: #f59e0b;
+  --color-zest-600: #d88a00;
+  --color-zest-700: #b67400;
+  --color-zest-800: #996000;
+  --color-zest-900: #663f00;
+  --color-zest-950: #412805;
+
+  /* mint — ancorada em #10b981 (degrau 500) */
+  --color-mint-50: #eff8f3;
+  --color-mint-100: #e1f4e9;
+  --color-mint-200: #c6ead7;
+  --color-mint-300: #9bddbc;
+  --color-mint-400: #5fcc9c;
+  --color-mint-500: #10b981;
+  --color-mint-600: #00a471;
+  --color-mint-700: #008c60;
+  --color-mint-800: #067751;
+  --color-mint-900: #065137;
+  --color-mint-950: #0e3626;
+
+  /* sky — ancorada em #06b6d4 (degrau 500) */
+  --color-sky-50: #eef8fa;
+  --color-sky-100: #e0f3f7;
+  --color-sky-200: #c5e9f2;
+  --color-sky-300: #9bdaea;
+  --color-sky-400: #5ec9e2;
+  --color-sky-500: #06b6d4;
+  --color-sky-600: #00a1bb;
+  --color-sky-700: #0088a0;
+  --color-sky-800: #007387;
+  --color-sky-900: #014e5c;
+  --color-sky-950: #0c333c;
+
+  /* grape — ancorada em #a855f7 (degrau 500) */
+  --color-grape-50: #f8f3ff;
+  --color-grape-100: #f1e7ff;
+  --color-grape-200: #e4d1ff;
+  --color-grape-300: #d1aeff;
+  --color-grape-400: #bd82ff;
+  --color-grape-500: #a855f7;
+  --color-grape-600: #9846e3;
+  --color-grape-700: #833ec3;
+  --color-grape-800: #6f39a5;
+  --color-grape-900: #4f2976;
+  --color-grape-950: #372150;
+
+  /* coral — ancorada em #fb7185 (degrau 500) */
+  --color-coral-50: #fff2f3;
+  --color-coral-100: #ffe9ea;
+  --color-coral-200: #ffd6d9;
+  --color-coral-300: #ffbac0;
+  --color-coral-400: #ff96a1;
+  --color-coral-500: #fb7185;
+  --color-coral-600: #e35e73;
+  --color-coral-700: #c05061;
+  --color-coral-800: #a14553;
+  --color-coral-900: #6e2d37;
+  --color-coral-950: #482025;
+
+  /* iris — ancorada em #3b82f6 (degrau 500) */
+  --color-iris-50: #f1f6ff;
+  --color-iris-100: #e2edff;
+  --color-iris-200: #c6dcff;
+  --color-iris-300: #9cc2ff;
+  --color-iris-400: #6aa2ff;
+  --color-iris-500: #3b82f6;
+  --color-iris-600: #2e73e3;
+  --color-iris-700: #2963c2;
+  --color-iris-800: #2756a4;
+  --color-iris-900: #1c3e76;
+  --color-iris-950: #182d50;
+
+  /* lime — ancorada em #84cc16 (degrau 500) */
+  --color-lime-50: #f2f8ed;
+  --color-lime-100: #e9f5de;
+  --color-lime-200: #d7efc3;
+  --color-lime-300: #bde698;
+  --color-lime-400: #9eda5d;
+  --color-lime-500: #84cc16;
+  --color-lime-600: #72b300;
+  --color-lime-700: #5f9700;
+  --color-lime-800: #4f7f00;
+  --color-lime-900: #335400;
+  --color-lime-950: #203506;
+
+  /* O nome curto é o tom de ação da cor — o que o produto usa quando não está
+     falando de degrau nenhum. */
+  --color-punch: var(--color-punch-500); /* rosa   — QA, destaque quente */
+  --color-zest: var(
+    --color-zest-500
+  ); /*   âmbar  — PO, atenção, "quase no limite" */
+  --color-mint: var(
+    --color-mint-500
+  ); /*   verde  — Back-End, sucesso, dentro do limite */
+  --color-sky: var(--color-sky-500); /*     ciano  — Front-End */
+  --color-grape: var(--color-grape-500); /* uva    — Tech Lead */
+  --color-coral: var(
+    --color-coral-500
+  ); /* coral  — erro, estouro, destrutivo */
+}
+
+@theme static {
   /* ------------------------------------------------------------------------
      Tipografia
      Três famílias com papéis distintos: display para títulos, sans para texto
      corrido e interface, mono para número que precisa alinhar (código de sala,
      cronômetro, pontuação).
      ------------------------------------------------------------------------ */
-  --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
-  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* Escala tipográfica — razão 1.25 (terça maior) a partir de 16px.
      Os dois primeiros degraus quebram a razão de propósito: rótulo em caixa
@@ -86,10 +221,23 @@
   --container-shell: 56rem;
   --container-rail: 18rem;
 
-  /* Raios generosos, que é o que dá a sensação de brinquedo. */
-  --radius-control: 1rem; /* botão, campo */
-  --radius-card: 1.5rem; /* cartão, painel */
-  --radius-blob: 2.5rem; /* superfícies grandes */
+  /* Raio.
+     Controle é 8px — o padrão do Preline, e o que faz um botão parecer um
+     botão e não uma pastilha. As superfícies mantêm o raio generoso, que é de
+     onde vem a sensação de brinquedo: o contraste entre a caixa sóbria e o
+     cartão arredondado é proposital. */
+  /* Altura dos controles.
+     Botão, campo e select medem daqui — é o que faz um campo e o botão ao lado
+     dele alinharem sem ninguém conferir na régua. Três degraus, os mesmos três
+     nomes de tamanho que os componentes usam. */
+  --control-sm: 2.25rem; /*  36px */
+  --control-md: 2.625rem; /* 42px */
+  --control-lg: 2.875rem; /* 46px */
+
+  --radius-check: 0.25rem; /* 4px  — caixa de seleção */
+  --radius-control: 0.5rem; /* 8px  — botão, campo, select */
+  --radius-card: 1.5rem; /*    24px — cartão, painel */
+  --radius-blob: 2.5rem; /*    40px — superfícies grandes */
 
   /* ------------------------------------------------------------------------
      Movimento
@@ -128,7 +276,7 @@
   color-scheme: light;
 }
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   --surface-base: #120a26;
   --surface-raised: #1c1038;
   --surface-sunken: #0c0519;
@@ -154,8 +302,393 @@
 }
 
 /* ============================================================================
+   Acento por papel
+   ============================================================================
+
+   O papel da pessoa na cerimônia decide a cor dela em toda a interface. Esse
+   mapa mora aqui, no tema, e não numa constante de TypeScript: é o que permite
+   um tema alternativo recolorir os papéis sem tocar em componente nenhum — e é
+   o que tira a cor de dentro de `style` inline.
+
+   Quem usa declara o papel e lê o acento:
+
+     <span data-role="frontend" className="text-(--ds-accent)">
+
+   `--ds-accent` é a única variável que o componente precisa conhecer. Ele não
+   sabe, nem deve saber, que Front-End é ciano.
+   ============================================================================ */
+
+@layer base {
+  /* O preflight do Tailwind v4 deixa `button` com `cursor: default`, que é o
+     que o HTML manda mas não é o que a pessoa espera de uma interface. Isso
+     devolve a mãozinha para tudo que é clicável — inclusive os componentes do
+     registry, que ficam intocados. Desabilitado continua sem mão, porque ali
+     o cursor é informação: diz que não adianta clicar. */
+  :where(button, [role="button"], summary, select):not(
+    :disabled,
+    [disabled],
+    [aria-disabled="true"],
+    [data-disabled]
+  ) {
+    cursor: pointer;
+  }
+}
+
+@layer base {
+  /* Sem papel nem tom declarado, o acento é a marca — a mesma receita de
+     qualquer outro tom, só que na raiz. É o que faz um botão solto já nascer
+     violeta sem ninguém precisar dizer. */
+  :root {
+    --ds-accent: var(--color-brand-500);
+    --ds-accent-hover: light-dark(
+      var(--color-brand-600),
+      var(--color-brand-400)
+    );
+    --ds-accent-active: light-dark(
+      var(--color-brand-700),
+      var(--color-brand-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-brand-700), var(--color-brand-300));
+    --ds-accent-soft: light-dark(
+      var(--color-brand-100),
+      color-mix(in oklab, var(--color-brand-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-brand-200),
+      color-mix(in oklab, var(--color-brand-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-brand-300),
+      color-mix(in oklab, var(--color-brand-400) 55%, transparent)
+    );
+  }
+
+  /* ---- Papel na cerimônia ---- */
+
+  /* Product Owner */
+  [data-role="po"] {
+    --ds-accent: var(--color-zest-500);
+    --ds-accent-hover: light-dark(var(--color-zest-600), var(--color-zest-400));
+    --ds-accent-active: light-dark(
+      var(--color-zest-700),
+      var(--color-zest-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-zest-700), var(--color-zest-300));
+    --ds-accent-soft: light-dark(
+      var(--color-zest-100),
+      color-mix(in oklab, var(--color-zest-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-zest-200),
+      color-mix(in oklab, var(--color-zest-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-zest-300),
+      color-mix(in oklab, var(--color-zest-400) 55%, transparent)
+    );
+  }
+
+  /* Tech Lead */
+  [data-role="tech_lead"] {
+    --ds-accent: var(--color-grape-500);
+    --ds-accent-hover: light-dark(
+      var(--color-grape-600),
+      var(--color-grape-400)
+    );
+    --ds-accent-active: light-dark(
+      var(--color-grape-700),
+      var(--color-grape-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-grape-700), var(--color-grape-300));
+    --ds-accent-soft: light-dark(
+      var(--color-grape-100),
+      color-mix(in oklab, var(--color-grape-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-grape-200),
+      color-mix(in oklab, var(--color-grape-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-grape-300),
+      color-mix(in oklab, var(--color-grape-400) 55%, transparent)
+    );
+  }
+
+  /* Front-End */
+  [data-role="frontend"] {
+    --ds-accent: var(--color-sky-500);
+    --ds-accent-hover: light-dark(var(--color-sky-600), var(--color-sky-400));
+    --ds-accent-active: light-dark(var(--color-sky-700), var(--color-sky-300));
+    --ds-accent-ink: light-dark(var(--color-sky-700), var(--color-sky-300));
+    --ds-accent-soft: light-dark(
+      var(--color-sky-100),
+      color-mix(in oklab, var(--color-sky-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-sky-200),
+      color-mix(in oklab, var(--color-sky-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-sky-300),
+      color-mix(in oklab, var(--color-sky-400) 55%, transparent)
+    );
+  }
+
+  /* Back-End */
+  [data-role="backend"] {
+    --ds-accent: var(--color-mint-500);
+    --ds-accent-hover: light-dark(var(--color-mint-600), var(--color-mint-400));
+    --ds-accent-active: light-dark(
+      var(--color-mint-700),
+      var(--color-mint-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-mint-700), var(--color-mint-300));
+    --ds-accent-soft: light-dark(
+      var(--color-mint-100),
+      color-mix(in oklab, var(--color-mint-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-mint-200),
+      color-mix(in oklab, var(--color-mint-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-mint-300),
+      color-mix(in oklab, var(--color-mint-400) 55%, transparent)
+    );
+  }
+
+  /* QA */
+  [data-role="qa"] {
+    --ds-accent: var(--color-punch-500);
+    --ds-accent-hover: light-dark(
+      var(--color-punch-600),
+      var(--color-punch-400)
+    );
+    --ds-accent-active: light-dark(
+      var(--color-punch-700),
+      var(--color-punch-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-punch-700), var(--color-punch-300));
+    --ds-accent-soft: light-dark(
+      var(--color-punch-100),
+      color-mix(in oklab, var(--color-punch-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-punch-200),
+      color-mix(in oklab, var(--color-punch-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-punch-300),
+      color-mix(in oklab, var(--color-punch-400) 55%, transparent)
+    );
+  }
+
+  /* Designer */
+  [data-role="designer"] {
+    --ds-accent: var(--color-iris-500);
+    --ds-accent-hover: light-dark(var(--color-iris-600), var(--color-iris-400));
+    --ds-accent-active: light-dark(
+      var(--color-iris-700),
+      var(--color-iris-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-iris-700), var(--color-iris-300));
+    --ds-accent-soft: light-dark(
+      var(--color-iris-100),
+      color-mix(in oklab, var(--color-iris-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-iris-200),
+      color-mix(in oklab, var(--color-iris-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-iris-300),
+      color-mix(in oklab, var(--color-iris-400) 55%, transparent)
+    );
+  }
+
+  /* Produto (a cadeira do negócio) */
+  [data-role="product"] {
+    --ds-accent: var(--color-lime-500);
+    --ds-accent-hover: light-dark(var(--color-lime-600), var(--color-lime-400));
+    --ds-accent-active: light-dark(
+      var(--color-lime-700),
+      var(--color-lime-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-lime-700), var(--color-lime-300));
+    --ds-accent-soft: light-dark(
+      var(--color-lime-100),
+      color-mix(in oklab, var(--color-lime-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-lime-200),
+      color-mix(in oklab, var(--color-lime-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-lime-300),
+      color-mix(in oklab, var(--color-lime-400) 55%, transparent)
+    );
+  }
+
+  /* ---- Estado, o outro eixo de cor do produto ---- */
+
+  /* ação */
+  [data-tone="brand"] {
+    --ds-accent: var(--color-brand-500);
+    --ds-accent-hover: light-dark(
+      var(--color-brand-600),
+      var(--color-brand-400)
+    );
+    --ds-accent-active: light-dark(
+      var(--color-brand-700),
+      var(--color-brand-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-brand-700), var(--color-brand-300));
+    --ds-accent-soft: light-dark(
+      var(--color-brand-100),
+      color-mix(in oklab, var(--color-brand-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-brand-200),
+      color-mix(in oklab, var(--color-brand-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-brand-300),
+      color-mix(in oklab, var(--color-brand-400) 55%, transparent)
+    );
+  }
+
+  /* dentro do limite */
+  [data-tone="positive"] {
+    --ds-accent: var(--color-mint-500);
+    --ds-accent-hover: light-dark(var(--color-mint-600), var(--color-mint-400));
+    --ds-accent-active: light-dark(
+      var(--color-mint-700),
+      var(--color-mint-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-mint-700), var(--color-mint-300));
+    --ds-accent-soft: light-dark(
+      var(--color-mint-100),
+      color-mix(in oklab, var(--color-mint-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-mint-200),
+      color-mix(in oklab, var(--color-mint-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-mint-300),
+      color-mix(in oklab, var(--color-mint-400) 55%, transparent)
+    );
+  }
+
+  /* perto do teto */
+  [data-tone="attention"] {
+    --ds-accent: var(--color-zest-500);
+    --ds-accent-hover: light-dark(var(--color-zest-600), var(--color-zest-400));
+    --ds-accent-active: light-dark(
+      var(--color-zest-700),
+      var(--color-zest-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-zest-700), var(--color-zest-300));
+    --ds-accent-soft: light-dark(
+      var(--color-zest-100),
+      color-mix(in oklab, var(--color-zest-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-zest-200),
+      color-mix(in oklab, var(--color-zest-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-zest-300),
+      color-mix(in oklab, var(--color-zest-400) 55%, transparent)
+    );
+  }
+
+  /* estouro e erro */
+  [data-tone="critical"] {
+    --ds-accent: var(--color-coral-500);
+    --ds-accent-hover: light-dark(
+      var(--color-coral-600),
+      var(--color-coral-400)
+    );
+    --ds-accent-active: light-dark(
+      var(--color-coral-700),
+      var(--color-coral-300)
+    );
+    --ds-accent-ink: light-dark(var(--color-coral-700), var(--color-coral-300));
+    --ds-accent-soft: light-dark(
+      var(--color-coral-100),
+      color-mix(in oklab, var(--color-coral-500) 22%, transparent)
+    );
+    --ds-accent-soft-hover: light-dark(
+      var(--color-coral-200),
+      color-mix(in oklab, var(--color-coral-500) 32%, transparent)
+    );
+    --ds-accent-line: light-dark(
+      var(--color-coral-300),
+      color-mix(in oklab, var(--color-coral-400) 55%, transparent)
+    );
+  }
+
+  /* O neutro não tem rampa: ele é o texto de apoio do tema, que já troca de
+     valor sozinho entre claro e escuro. */
+  [data-tone="neutral"] {
+    --ds-accent: var(--text-subtle);
+    --ds-accent-hover: var(--text-muted);
+    --ds-accent-active: var(--text-strong);
+    --ds-accent-ink: var(--text-muted);
+    --ds-accent-soft: var(--surface-sunken);
+    --ds-accent-soft-hover: var(--surface-border);
+    --ds-accent-line: var(--surface-border);
+  }
+}
+
+/* ============================================================================
+   Fundo do diálogo
+   ============================================================================
+   O registry deixa o overlay quase transparente, pensado para uma biblioteca
+   neutra. Aqui ele carrega a marca: violeta profundo com o fundo desfocado o
+   suficiente para a mesa sumir sem escurecer a tela inteira.
+
+   Mora no tema, e não numa classe passada ao componente, porque o overlay é
+   renderizado por dentro do `Dialog` do registry — quem quisesse estilizar por
+   fora acabaria criando um segundo overlay, que é exatamente o bug que isto
+   resolveu: dois portais empilhados, o de fora borrando o painel junto com o
+   fundo.
+   ============================================================================ */
+
+/* Fora de qualquer `@layer` de propósito: o registry pinta o overlay com
+   `bg-black/10`, e utilitário do Tailwind vence qualquer regra em `base` — a
+   ordem das camadas decide, não a especificidade. CSS sem camada fica acima de
+   todas elas, que é o único jeito de o tema mandar aqui sem editar o arquivo do
+   registry. */
+[data-slot='dialog-overlay'] {
+  background-color: color-mix(in oklab, var(--color-brand-950) 72%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  [data-slot='dialog-overlay'] {
+    backdrop-filter: blur(6px);
+  }
+}
+
+/* ============================================================================
    Utilitários e movimento do DS
    ============================================================================ */
+
+/* O degradê que a inicial usa: do acento para o violeta da marca. Como
+   utilitário, o componente escreve uma classe em vez de montar a string. */
+@utility ds-accent-gradient {
+  background-image: linear-gradient(
+    140deg,
+    var(--ds-accent),
+    color-mix(in oklab, var(--ds-accent) 55%, var(--color-brand-600))
+  );
+}
+
+/* Fundo lavado do acento, para selo e realce. */
+@utility ds-accent-wash {
+  background-color: color-mix(in oklab, var(--ds-accent) 16%, transparent);
+}
 
 @utility ds-text-gradient {
   background-image: linear-gradient(
@@ -166,6 +699,87 @@
   );
   background-clip: text;
   color: transparent;
+}
+
+/* ============================================================================
+   Movimento nomeado
+   ============================================================================
+   Estas três eram usadas pelas telas (`animate-pop-in`, `animate-float-idle`,
+   `ring-rainbow`) mas não existiam em CSS nenhum: ficaram para trás na migração
+   para o monorepo, e classe que não existe não avisa — some em silêncio. Agora
+   moram aqui, que é onde o resto do movimento do produto já estava.
+   ============================================================================ */
+
+@theme static {
+  --animate-pop-in: ds-pop-in 0.42s var(--ease-spring) both;
+  --animate-float-idle: ds-float-idle 3.2s ease-in-out infinite;
+  /* Chamar atenção sem assustar: dois balanços curtos e para. */
+  --animate-nudge: ds-nudge 0.7s var(--ease-out-soft) 2;
+}
+
+@keyframes ds-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ds-float-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes ds-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+/* O anel que percorre as cores da marca. Usado na ação que está pedindo para
+   ser clicada — hoje, o "Revelar" quando a mesa inteira já votou. */
+@utility ring-rainbow {
+  animation: ds-ring-rainbow 2.4s linear infinite;
+}
+
+@keyframes ds-ring-rainbow {
+  0% {
+    box-shadow: 0 0 0 3px
+      color-mix(in oklab, var(--color-brand-400) 70%, transparent);
+  }
+  33% {
+    box-shadow: 0 0 0 3px
+      color-mix(in oklab, var(--color-punch) 70%, transparent);
+  }
+  66% {
+    box-shadow: 0 0 0 3px
+      color-mix(in oklab, var(--color-zest) 70%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 3px
+      color-mix(in oklab, var(--color-brand-400) 70%, transparent);
+  }
 }
 
 @keyframes ds-bounce {

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Badge, Button, Input } from './ui'
+import { Badge, Button, Input } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import {
   SPRINT_PRESETS,
   addDays,
+  daysBetween,
   formatLong,
   formatShort,
   holidaysInWindow,
@@ -19,9 +20,21 @@ interface Props {
   onChange: (next: { start: string; days: number; holidays: Holiday[] }) => void
 }
 
+/** O último dia da janela, que é o que a pessoa escolhe no modo personalizado. */
+const endOf = (start: string, days: number) => addDays(start, days - 1)
+
 export function SprintWindowPicker({ start, days, holidays, onChange }: Props) {
   const [customDate, setCustomDate] = useState('')
   const [customName, setCustomName] = useState('')
+
+  /**
+   * Uma janela que não bate com nenhum preset só pode ter vindo do modo
+   * personalizado, então ele já abre ligado. O estado existe para o caso
+   * contrário: escolher "Personalizada" tendo 14 dias, que é um preset válido.
+   */
+  const [custom, setCustom] = useState(
+    () => !SPRINT_PRESETS.some((preset) => preset.days === days),
+  )
 
   const stats = useMemo(() => windowStats({ start, days, holidays }), [start, days, holidays])
 
@@ -99,24 +112,47 @@ export function SprintWindowPicker({ start, days, holidays, onChange }: Props) {
           </span>
           <div className="flex flex-wrap gap-1.5">
             {SPRINT_PRESETS.map((preset) => (
-              <button
+              <DurationChip
                 key={preset.days}
-                type="button"
-                onClick={() => reframe(start, preset.days)}
-                aria-pressed={days === preset.days}
-                className={cx(
-                  'cursor-pointer rounded-xl px-3 py-2 text-xs font-black transition-all',
-                  days === preset.days
-                    ? 'bg-brand-500 text-white shadow-md shadow-brand-500/30'
-                    : 'bg-[var(--surface-sunken)] text-ink-muted hover:text-ink',
-                )}
-              >
-                {preset.label}
-              </button>
+                label={preset.label}
+                active={!custom && days === preset.days}
+                onClick={() => {
+                  setCustom(false)
+                  reframe(start, preset.days)
+                }}
+              />
             ))}
+            <DurationChip
+              label="Personalizada"
+              active={custom}
+              onClick={() => setCustom(true)}
+            />
           </div>
         </div>
       </div>
+
+      {custom && (
+        <label className="block sm:max-w-[calc(50%-0.5rem)]">
+          <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-ink-muted">
+            Termina em
+          </span>
+          <Input
+            type="date"
+            value={endOf(start, days)}
+            min={start}
+            max={addDays(start, 89)}
+            onChange={(e) => {
+              const fim = e.target.value
+              if (!fim || fim < start) return
+              reframe(start, daysBetween(start, fim))
+            }}
+          />
+          <span className="mt-2 block text-xs text-ink-subtle">
+            A janela vai de ponta a ponta, incluindo os dois dias. Fim de semana e feriado
+            saem da conta de dias úteis logo abaixo.
+          </span>
+        </label>
+      )}
 
       {/* Resumo da janela */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl bg-[var(--surface-sunken)] px-4 py-3">
@@ -163,8 +199,8 @@ export function SprintWindowPicker({ start, days, holidays, onChange }: Props) {
                     <span className="min-w-0 flex-1 truncate text-sm font-bold text-ink">
                       {holiday.name}
                     </span>
-                    {holiday.optional && <Badge color="var(--color-zest)">Facultativo</Badge>}
-                    {weekend && <Badge color="var(--color-ink-subtle)">Fim de semana</Badge>}
+                    {holiday.optional && <Badge tone="attention">Facultativo</Badge>}
+                    {weekend && <Badge tone="neutral">Fim de semana</Badge>}
                   </label>
                 </li>
               )
@@ -187,16 +223,16 @@ export function SprintWindowPicker({ start, days, holidays, onChange }: Props) {
           max={stats.end}
           onChange={(e) => setCustomDate(e.target.value)}
           aria-label="Data da folga"
-          className="py-2 text-sm"
         />
         <Input
           value={customName}
           onChange={(e) => setCustomName(e.target.value)}
           placeholder="Feriado municipal, folga coletiva..."
           aria-label="Nome da folga"
-          className="py-2 text-sm"
         />
-        <Button size="sm" variant="secondary" onClick={addCustom} isDisabled={!customDate}>
+        {/* `md` para bater com a altura dos dois campos ao lado — os três leem o
+            mesmo token de altura. */}
+        <Button variant="white" onClick={addCustom} isDisabled={!customDate}>
           Acrescentar
         </Button>
       </div>
@@ -227,5 +263,32 @@ function Stat({
         {label}
       </span>
     </span>
+  )
+}
+
+/** Uma opção de duração. Pastilha, e não botão do DS, porque aqui ela é um rádio. */
+function DurationChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cx(
+        'rounded-xl px-3 py-2 text-xs font-black transition-all',
+        active
+          ? 'bg-brand-500 text-white shadow-md shadow-brand-500/30'
+          : 'bg-sunken text-ink-muted hover:text-ink',
+      )}
+    >
+      {label}
+    </button>
   )
 }

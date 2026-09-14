@@ -64,8 +64,8 @@ export function buildGameView(state: RoomState, userId: string | null): GameView
 
   const currentStory = stories[room.current_story_index] ?? null
 
-  const voters = votersOf(players, room.qa_votes)
-  const watchers = watchersOf(players, room.qa_votes)
+  const voters = votersOf(players, room.optional_voters)
+  const watchers = watchersOf(players, room.optional_voters)
   const scorers = scorersOf(players)
 
   const roundVotes = currentStory
@@ -91,7 +91,7 @@ export function buildGameView(state: RoomState, userId: string | null): GameView
   return {
     me,
     isHost,
-    canVote: Boolean(me && roleVotes(me.role, room.qa_votes)),
+    canVote: Boolean(me && roleVotes(me.role, room.optional_voters)),
 
     currentStory,
     sprintComplete: sprintIsComplete(state),

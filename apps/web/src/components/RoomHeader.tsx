@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button } from './ui'
+import { Button, Logo } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import { CapacityMeter } from './CapacityPanel'
 import type { TeamCapacity } from '@/lib/derive'
@@ -37,7 +37,7 @@ export function RoomHeader({
 
   const invite = async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/entrar/${roomId}`)
+      await navigator.clipboard.writeText(`${window.location.origin}/join/${roomId}`)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
@@ -51,16 +51,7 @@ export function RoomHeader({
     <header className="sticky top-0 z-30 border-b border-hairline bg-[var(--surface-raised)]/85 backdrop-blur-xl">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg font-black text-white"
-            style={{
-              background:
-                'linear-gradient(140deg, var(--color-brand-500), var(--color-punch))',
-            }}
-            aria-hidden
-          >
-            ◆
-          </span>
+          <Logo className="size-9" />
           <div className="min-w-0">
             <h1 className="truncate text-base font-black leading-tight text-ink">
               {sessionName}
@@ -91,7 +82,7 @@ export function RoomHeader({
           {isHost && (
             <>
               {!sprintComplete && (
-                <Button variant="secondary" size="sm" onClick={onAddStory}>
+                <Button variant="white" size="sm" onClick={onAddStory}>
                   + História
                 </Button>
               )}

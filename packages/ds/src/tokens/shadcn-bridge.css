@@ -15,9 +15,9 @@
    ============================================================================ */
 
 :root {
-  /* Raio base do shadcn. Ele deriva sm/md/lg/xl daqui por cálculo, então um
-     único número afina o arredondamento da biblioteca inteira. */
-  --radius: 1rem;
+  /* Raio base do shadcn — 8px, o mesmo do nosso controle. É daqui que sai o
+     `rounded-lg` que os campos do registry usam. */
+  --radius: 0.5rem;
 
   /* Superfícies ------------------------------------------------------------ */
   --background: var(--surface-base);
@@ -130,9 +130,12 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  /* Os três primeiros degraus seguem o raio de controle. Os dois últimos são
+     de superfície — ficam em valor próprio, e não em múltiplo, porque o que
+     vale para um botão de 8px não vale para um painel. */
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-xl: 1.4rem;
+  --radius-2xl: 1.8rem;
 }

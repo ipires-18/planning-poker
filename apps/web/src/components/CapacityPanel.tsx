@@ -1,17 +1,25 @@
+import { Initials } from '@pp/ds/atoms'
 import { useState } from 'react'
-import { Avatar, Button, Input } from './ui'
+import { Button, Input } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import { SprintWindowPicker } from './SprintWindowPicker'
+import { DiscussionLimitPicker, OptionalVoterToggles } from './SessionRules'
 import { useCapacityDraft, type WindowDraft } from '@/hooks/useCapacityDraft'
 import type { TeamCapacity } from '@/lib/derive'
-import { ROLE_ACCENT, ROLE_SHORT, type CapacityEntry, type Player } from '@/types'
+import { ROLE_SHORT, type CapacityEntry, type Player } from '@/types'
+import type { OptionalVoterRole } from '@/types'
 
 interface Props {
   capacity: TeamCapacity
   sprint: WindowDraft
-  qaVotes: boolean
-  qaPresent: boolean
-  onToggleQaVoting: (enabled: boolean) => void
+  /** Convidados com baralho nesta sala. */
+  optionalVoters: OptionalVoterRole[]
+  /** Quais cadeiras de convidado estão ocupadas. */
+  votersPresent: OptionalVoterRole[]
+  /** Timebox de discussão por história, em segundos. 0 = sem aviso. */
+  discussionLimit: number
+  onToggleOptionalVoter: (role: OptionalVoterRole, enabled: boolean) => void
+  onSetDiscussionLimit: (seconds: number) => void
   onSaveWindow: (next: WindowDraft) => Promise<void>
   onSaveCapacity: (entries: CapacityEntry[]) => Promise<void>
 }
@@ -19,9 +27,11 @@ interface Props {
 export function CapacityPanel({
   capacity,
   sprint,
-  qaVotes,
-  qaPresent,
-  onToggleQaVoting,
+  optionalVoters,
+  votersPresent,
+  discussionLimit,
+  onToggleOptionalVoter,
+  onSetDiscussionLimit,
   onSaveWindow,
   onSaveCapacity,
 }: Props) {
@@ -42,7 +52,15 @@ export function CapacityPanel({
   return (
     <div className="space-y-6">
       <Section title="Quem vota">
-        <QaVotingToggle enabled={qaVotes} qaPresent={qaPresent} onChange={onToggleQaVoting} />
+        <OptionalVoterToggles
+          value={optionalVoters}
+          present={votersPresent}
+          onChange={onToggleOptionalVoter}
+        />
+      </Section>
+
+      <Section title="Ritmo da discussão" divided>
+        <DiscussionLimitPicker value={discussionLimit} onChange={onSetDiscussionLimit} />
       </Section>
 
       <Section title="Janela da sprint" divided>
@@ -96,7 +114,7 @@ export function CapacityPanel({
         </div>
       </Section>
 
-      <Button variant="joy" size="lg" className="w-full" onClick={save} isDisabled={saving}>
+      <Button variant="solid" size="lg" className="w-full" onClick={save} isDisabled={saving}>
         {saving ? 'Salvando...' : 'Salvar capacidade'}
       </Button>
     </div>
@@ -128,41 +146,6 @@ function Section({
  * A QA participa da cerimônia de qualquer jeito; o que muda aqui é se ela
  * recebe baralho. Pontuação ela não recebe em nenhum caso.
  */
-function QaVotingToggle({
-  enabled,
-  qaPresent,
-  onChange,
-}: {
-  enabled: boolean
-  qaPresent: boolean
-  onChange: (enabled: boolean) => void
-}) {
-  return (
-    <label
-      className={cx(
-        'flex cursor-pointer items-start gap-3 rounded-2xl p-4 transition-colors',
-        enabled ? 'bg-brand-500/10' : 'bg-[var(--surface-sunken)]',
-      )}
-    >
-      <input
-        type="checkbox"
-        checked={enabled}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 cursor-pointer accent-brand-500"
-      />
-      <span className="min-w-0">
-        <span className="block text-sm font-bold text-ink">A QA vota nesta sessão</span>
-        <span className="mt-1 block text-xs leading-snug text-ink-subtle">
-          Desligado, a QA acompanha as histórias e levanta pontos sem carta na mão. Em
-          qualquer um dos casos ela não recebe pontuação — quem carrega story point é Tech
-          Lead, Front e Back.
-          {!qaPresent && ' Nenhuma QA sentou à mesa ainda.'}
-        </span>
-      </span>
-    </label>
-  )
-}
-
 /** Preenche a capacidade de todo mundo a partir de um ritmo em pontos por dia. */
 function RateSuggester({
   rate,
@@ -184,10 +167,11 @@ function RateSuggester({
           onChange={(e) => onRateChange(e.target.value)}
           inputMode="decimal"
           aria-label="Pontos por dia"
-          className="w-16 py-1.5 text-center text-sm font-black"
+          size="sm"
+          className="w-16 px-2 text-center font-black"
         />
       </label>
-      <Button size="sm" variant="secondary" onClick={onApply}>
+      <Button size="sm" variant="white" onClick={onApply}>
         Sugerir
       </Button>
     </div>
@@ -211,19 +195,18 @@ function CapacityRow({
   onCapacityChange: (points: number) => void
   onDaysOffChange: (days: number) => void
 }) {
-  const accent = ROLE_ACCENT[player.role]
   const dayLabel = `${availableDays} dia${availableDays === 1 ? '' : 's'}`
 
   return (
-    <li className="flex items-center gap-3 rounded-2xl bg-[var(--surface-sunken)] p-3">
-      <Avatar name={player.name} color={accent} size={34} />
+    <li
+      data-role={player.role}
+      className="flex items-center gap-3 rounded-[var(--radius-card)] bg-sunken p-3"
+    >
+      <Initials name={player.name} role={player.role} size="md" />
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-ink">{player.name}</p>
-        <span
-          className="whitespace-nowrap text-[10px] font-black uppercase tracking-wider"
-          style={{ color: accent }}
-        >
+        <span className="whitespace-nowrap text-overline font-black uppercase tracking-(--tracking-overline) text-(--ds-accent)">
           {ROLE_SHORT[player.role]} · {dayLabel}
         </span>
       </div>
@@ -270,13 +253,9 @@ export function CapacityMeter({
 }) {
   const { committed, capacity: total, ratio, unset } = capacity
 
-  const color = unset
-    ? 'var(--color-brand-400)'
-    : ratio > 1
-      ? 'var(--color-coral)'
-      : ratio > 0.9
-        ? 'var(--color-zest)'
-        : 'var(--color-mint)'
+  // O tom conta a história: sem capacidade definida é neutro-marca; cheio vira
+  // atenção; estourado vira crítico. Quem pinta é o tema.
+  const tone = unset ? 'brand' : ratio > 1 ? 'critical' : ratio > 0.9 ? 'attention' : 'positive'
 
   const Wrapper = onClick ? 'button' : 'div'
 
@@ -284,20 +263,19 @@ export function CapacityMeter({
     <Wrapper
       {...(onClick ? { onClick, type: 'button' as const } : {})}
       title={
-        unset
-          ? 'Definir a capacidade do time'
-          : `${committed} de ${total} pontos comprometidos`
+        unset ? 'Definir a capacidade do time' : `${committed} de ${total} pontos comprometidos`
       }
+      data-tone={tone}
       className={cx(
         'flex items-center gap-2.5 rounded-xl px-3 py-1.5 transition-colors',
-        onClick && 'cursor-pointer hover:bg-[var(--surface-sunken)]',
+        onClick && 'cursor-pointer hover:bg-sunken',
       )}
     >
       <div className="flex flex-col items-end leading-none">
         <span className="text-[9px] font-black uppercase tracking-[0.12em] text-ink-subtle">
           Comprometido
         </span>
-        <span className="mt-0.5 font-black" style={{ color }}>
+        <span className="mt-0.5 font-black text-(--ds-accent)">
           {committed}
           {!unset && <span className="text-ink-subtle"> / {total}</span>}
           <span className="text-[10px] text-ink-subtle"> pts</span>
@@ -305,15 +283,13 @@ export function CapacityMeter({
       </div>
 
       {!unset && (
-        <div
-          className="h-8 w-1.5 overflow-hidden rounded-full bg-[var(--surface-sunken)]"
-          aria-hidden
-        >
+        <div className="h-8 w-1.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
+          {/* Altura e deslocamento são porcentagens contínuas — não há classe
+              para "63,5%". A cor, essa sai do tom. */}
           <div
-            className="w-full rounded-full transition-all duration-500"
+            className="w-full rounded-full bg-(--ds-accent) transition-all duration-(--duration-scene)"
             style={{
               height: `${Math.min(100, ratio * 100)}%`,
-              backgroundColor: color,
               marginTop: `${Math.max(0, 100 - ratio * 100)}%`,
             }}
           />

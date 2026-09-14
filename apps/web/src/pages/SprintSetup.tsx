@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, ErrorNote, Field, Input } from '@/components/ui'
+import { Button, Input, Note } from '@pp/ds/atoms'
+import { Field } from '@pp/ds/molecules'
 import { cx } from '@/lib/cx'
 import { DeckPicker } from '@/components/DeckPicker'
 import { SprintWindowPicker } from '@/components/SprintWindowPicker'
+import { DiscussionLimitPicker, OptionalVoterToggles } from '@/components/SessionRules'
 import { StoryEditor, StoryQueue } from '@/components/StoryQueue'
 import { useSprintDraft } from '@/hooks/useSprintDraft'
 import { useRoomQuota } from '@/hooks/useRoomQuota'
@@ -39,8 +41,10 @@ export default function SprintSetup() {
         draft.deckId,
         draft.scale,
         draft.sprint,
+        draft.optionalVoters,
+        draft.discussionLimit,
       )
-      navigate(`/sala/${roomId}`)
+      navigate(`/room/${roomId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não deu para criar a sala')
       setCreating(false)
@@ -95,6 +99,23 @@ export default function SprintSetup() {
         </Section>
 
         <Section
+          title="Quem vota"
+          hint="Quem não é dono de entrega só recebe baralho se o time quiser. Nenhum deles pontua, em nenhuma configuração — e dá para mudar durante a sessão."
+        >
+          <OptionalVoterToggles value={draft.optionalVoters} onChange={draft.toggleVoter} />
+        </Section>
+
+        <Section
+          title="Ritmo da discussão"
+          hint="Passando do tempo combinado, a mesa inteira vê um aviso para anotar a dúvida e seguir."
+        >
+          <DiscussionLimitPicker
+            value={draft.discussionLimit}
+            onChange={draft.setDiscussionLimit}
+          />
+        </Section>
+
+        <Section
           title="Janela da sprint"
           hint="Os dias úteis daqui viram a base da capacidade do time. Dá para ajustar depois, durante a sessão."
         >
@@ -129,7 +150,7 @@ export default function SprintSetup() {
             </h2>
             {draft.stories.length > 1 && (
               <span className="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">
-                Use ▲▼ para reordenar
+                Arraste pela alça para reordenar
               </span>
             )}
           </div>
@@ -139,6 +160,7 @@ export default function SprintSetup() {
             onEdit={draft.editStory}
             onDelete={draft.removeStory}
             onMove={draft.moveStory}
+            onReorder={draft.reorderStories}
             emptyLabel="Nada aqui ainda. Adicione a primeira história acima."
           />
         </div>
@@ -156,11 +178,11 @@ export default function SprintSetup() {
           </p>
         )}
 
-        <ErrorNote>{error}</ErrorNote>
+        <Note>{error}</Note>
 
         <Button
           type="submit"
-          variant="joy"
+          variant="solid"
           size="lg"
           isDisabled={creating || quota.isFull}
           className="w-full"

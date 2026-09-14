@@ -1,8 +1,9 @@
+import { Initials } from '@pp/ds/atoms'
 import { useEffect, useState } from 'react'
-import { Avatar, Button, Input } from './ui'
+import { Button, Input } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import { formatClock } from '@/lib/holidays'
-import { ROLE_ACCENT, type VotingSide } from '@/types'
+import type { VotingSide } from '@/types'
 import { safeUrl } from '@/lib/links'
 import { summaryAsText, type PlayerSummary } from '@/lib/derive'
 
@@ -45,6 +46,9 @@ function Confetti() {
         <span
           key={p.id}
           className="absolute top-0 block rounded-sm"
+          /* Cada confete sorteia posição, tamanho e duração no nascimento. Não há
+             classe para um valor aleatório por instância — este é o lugar
+             legítimo do style inline. */
           style={{
             left: `${p.left}%`,
             width: p.size,
@@ -121,30 +125,27 @@ export function SprintSummary({
             <h3 className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
               Resumo final
             </h3>
-            <Button size="sm" variant="secondary" onClick={copy}>
+            <Button size="sm" variant="white" onClick={copy}>
               {copied ? '✓ Copiado' : 'Copiar resumo'}
             </Button>
           </div>
 
           <div className="space-y-4">
             {summaries.map((row) => {
-              const accent = ROLE_ACCENT[row.player.role]
               return (
                 <div
                   key={row.player.id}
-                  className="rounded-2xl bg-[var(--surface-sunken)] p-5"
+                  data-role={row.player.role}
+                  className="rounded-[var(--radius-card)] bg-sunken p-5"
                 >
                   <div className="mb-3 flex items-center justify-between gap-3 border-b border-hairline pb-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <Avatar name={row.player.name} color={accent} size={38} />
+                      <Initials name={row.player.name} role={row.player.role} size="lg" />
                       <h4 className="truncate text-lg font-black text-ink">
                         {row.player.name}
                       </h4>
                     </div>
-                    <span
-                      className="shrink-0 rounded-xl px-3 py-1.5 text-sm font-black text-white"
-                      style={{ backgroundColor: accent }}
-                    >
+                    <span className="shrink-0 rounded-xl bg-(--ds-accent) px-3 py-1.5 text-body-sm font-black text-white">
                       {row.total} pt{row.total !== 1 && 's'}
                     </span>
                   </div>
@@ -206,7 +207,7 @@ export function SprintSummary({
                                 className={cx(
                                   'shrink-0 rounded-lg px-2 py-1 font-black text-ink',
                                   isHost
-                                    ? 'cursor-pointer hover:bg-brand-500/15'
+                                    ? 'hover:bg-brand-500/15'
                                     : 'cursor-default',
                                 )}
                                 title={isHost ? 'Clique para corrigir' : undefined}
@@ -227,11 +228,11 @@ export function SprintSummary({
 
         <div className="mt-6 space-y-3">
           {isHost && (
-            <Button variant="joy" size="lg" className="w-full" onClick={onAddStory}>
+            <Button variant="solid" size="lg" className="w-full" onClick={onAddStory}>
               Continuar a sprint · adicionar história
             </Button>
           )}
-          <Button variant="secondary" size="lg" className="w-full" onClick={onLeave}>
+          <Button variant="white" size="lg" className="w-full" onClick={onLeave}>
             Voltar ao início
           </Button>
         </div>

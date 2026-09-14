@@ -1,17 +1,23 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Input } from '@/components/ui'
+import { Button, Input } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import { roomExists } from '@/lib/api'
 
-/** Cartas decorativas em leque atrás do título. */
+/**
+ * Cartas decorativas em leque atrás do título.
+ *
+ * A cor sai dos papéis do time, e não de uma paleta à parte: quem chega já vê
+ * as cores que vai encontrar na mesa. `spread` e `tilt` são classes porque os
+ * cinco valores são fixos; fossem inline, o Tailwind não teria o que gerar.
+ */
 const FAN = [
-  { value: '3', rotate: -18, x: -150, color: 'var(--color-sky)', delay: '0s' },
-  { value: '5', rotate: -9, x: -75, color: 'var(--color-mint)', delay: '0.1s' },
-  { value: '8', rotate: 0, x: 0, color: 'var(--color-brand-500)', delay: '0.2s' },
-  { value: '13', rotate: 9, x: 75, color: 'var(--color-punch)', delay: '0.3s' },
-  { value: '21', rotate: 18, x: 150, color: 'var(--color-zest)', delay: '0.4s' },
-]
+  { value: '3', role: 'frontend', tilt: '-rotate-[18deg]', spread: '-translate-x-[calc(50%+117px)]', delay: 'delay-0' },
+  { value: '5', role: 'backend', tilt: '-rotate-[9deg]', spread: '-translate-x-[calc(50%+58px)]', delay: 'delay-100' },
+  { value: '8', role: 'tech_lead', tilt: 'rotate-0', spread: '-translate-x-1/2', delay: 'delay-200' },
+  { value: '13', role: 'qa', tilt: 'rotate-[9deg]', spread: '-translate-x-[calc(50%-58px)]', delay: 'delay-300' },
+  { value: '21', role: 'po', tilt: 'rotate-[18deg]', spread: '-translate-x-[calc(50%-117px)]', delay: 'delay-400' },
+] as const
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -29,7 +35,7 @@ export default function Landing() {
     setChecking(true)
     setError('')
     if (await roomExists(clean)) {
-      navigate(`/room/${clean}`)
+      navigate(`/join/${clean}`)
     } else {
       setError('Não achamos essa sala. Confira o código.')
       setChecking(false)
@@ -45,19 +51,17 @@ export default function Landing() {
           {FAN.map((card) => (
             <div
               key={card.value}
-              className="absolute left-1/2 top-0"
-              style={{
-                transform: `translateX(calc(-50% + ${card.x * 0.78}px)) rotate(${card.rotate}deg)`,
-              }}
+              data-role={card.role}
+              className={cx('absolute left-1/2 top-0', card.spread, card.tilt)}
             >
               <div
-                className="animate-pop-in flex h-32 w-22 items-center justify-center rounded-[1.1rem] text-3xl font-black text-white"
-                style={{
-                  background: `linear-gradient(150deg, ${card.color}, color-mix(in oklab, ${card.color} 50%, var(--color-brand-700)))`,
-                  boxShadow: `0 18px 38px -14px ${card.color}`,
-                  animationDelay: card.delay,
-                  width: '5.5rem',
-                }}
+                className={cx(
+                  'animate-pop-in flex h-32 w-22 items-center justify-center rounded-[1.1rem]',
+                  'text-3xl font-black text-white',
+                  'bg-[linear-gradient(150deg,var(--ds-accent),color-mix(in_oklab,var(--ds-accent)_50%,var(--color-brand-700)))]',
+                  'shadow-[0_18px_38px_-14px_var(--ds-accent)]',
+                  card.delay,
+                )}
               >
                 {card.value}
               </div>
@@ -77,7 +81,7 @@ export default function Landing() {
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-4">
-          <Button size="lg" variant="joy" onClick={() => navigate('/nova')} className="w-full sm:w-auto">
+          <Button size="lg" variant="joy" onClick={() => navigate('/new')} className="w-full sm:w-auto">
             Criar uma sessão
           </Button>
 
@@ -98,22 +102,19 @@ export default function Landing() {
               aria-label="Código da sala"
               autoComplete="off"
               spellCheck={false}
+              size="lg"
               className={cx(
-                'text-center font-mono text-2xl font-black tracking-[0.35em] uppercase',
+                'text-center font-mono text-title-sm font-black uppercase tracking-[0.3em]',
                 error && 'border-coral',
               )}
             />
-            <Button type="submit" variant="secondary" size="lg" isDisabled={checking}>
+            <Button type="submit" variant="white" size="lg" isDisabled={checking}>
               {checking ? '...' : 'Entrar'}
             </Button>
           </form>
 
           {error && <p className="text-sm font-bold text-coral">{error}</p>}
         </div>
-
-        <p className="mt-14 text-xs font-bold uppercase tracking-[0.18em] text-ink-subtle">
-          Tempo real · Votos protegidos no banco · Código aberto
-        </p>
       </div>
     </main>
   )
