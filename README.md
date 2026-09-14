@@ -13,7 +13,7 @@ não pela interface.
 - **Sessões por código de 6 caracteres** — entra pelo link, sem cadastro.
 - **Seis estilos de pontuação**: Fibonacci, Fibonacci modificada, linear,
   potências de 2, camisetas (PP–XGG) e uma escala personalizada que você digita.
-  Todas incluem o meio ponto.
+  Todas começam no meio ponto — não existe carta de 0.
 - **Histórias editáveis a qualquer momento** — o PO edita, reordena e exclui,
   tanto ao montar a sprint quanto com a sessão em andamento.
 - **Papéis**: Product Owner, Tech Lead, Front-End, Back-End e QA — com "quem
@@ -48,7 +48,7 @@ não pela interface.
   explosão que sai do centro da mesa, diferente do confete do fim da sprint.
 - **Tema claro e escuro.**
 
-## Três decisões que valem explicar
+## Quatro decisões que valem explicar
 
 **Votar e pontuar são coisas diferentes.** Colar os dois é o que obrigaria a QA
 a carregar story points para poder opinar, ou a ficar muda para não carregar. O
@@ -56,6 +56,14 @@ banco guarda as duas regras separadas: `role_scores()` é fixa por papel,
 `player_can_vote()` depende da sala. Desligar o voto da QA no meio de uma rodada
 apaga a carta dela, senão ficaria um voto contando para a revelação de quem não
 deveria mais ter baralho.
+
+**Não existe carta de 0.** Zero não é estimativa: se a história foi feita, ela
+vale alguma coisa — e uma história de 0 ponto ainda consome dia de alguém sem
+aparecer na capacidade do time, o que faz o planejamento mentir. Os casos que
+caíam no zero já tinham carta própria: "Ag. Definição" para o que ainda não dá
+para dimensionar, "?" para quem não sabe opinar. Uma pessoa continua podendo
+ficar com 0 dentro da divisão — é assim que se registra quem não pegou nada
+daquela história.
 
 **Camisetas sem quebrar a conta.** Cada carta guarda um rótulo e um valor:
 `{ label: "M", value: 3 }`. A mesa mostra a letra, a divisão de pontos usa o

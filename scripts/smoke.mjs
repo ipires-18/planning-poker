@@ -163,6 +163,13 @@ const { error: unbalanced } = await po.client.rpc('commit_story', {
 })
 check('divisão que não soma o total é recusada pelo banco', Boolean(unbalanced))
 
+const { error: zeroStory } = await po.client.rpc('commit_story', {
+  p_room_id: roomId,
+  p_points: 0,
+  p_allocations: [{ player_id: anaId, points: 0, pending: false }],
+})
+check('história valendo 0 é recusada', Boolean(zeroStory))
+
 const { error: negative } = await po.client.rpc('commit_story', {
   p_room_id: roomId,
   p_points: 8,
@@ -446,6 +453,16 @@ check(
   'Fibonacci tem a carta de meio ponto',
   roomDRow.point_scale.some((c) => c.value === 0.5),
 )
+check(
+  'nenhum baralho traz a carta de zero',
+  !roomDRow.point_scale.some((c) => c.value === 0),
+)
+
+const { error: zeroCard } = await ana.client.rpc('cast_vote', {
+  p_room_id: roomD, p_story_id: (await po.client.from('stories').select('id').eq('room_id', roomD).single()).data.id,
+  p_side: 'frontend', p_round: 1, p_value: '0',
+})
+check('votar "0" é recusado — a carta não existe mais', Boolean(zeroCard))
 
 /* ------------------------------------------------------------ capacidade --- */
 console.log('\nCapacidade do time')

@@ -6,6 +6,10 @@
  * "M" na carta, 3 na soma — sem quebrar a divisão de pontos entre as pessoas.
  *
  * Cartas de valor `null` não pontuam: são sinalizações.
+ *
+ * Nenhum baralho tem carta de 0: se a história foi feita, ela vale alguma
+ * coisa. Os casos que antes cairiam no zero têm carta própria — "Ag. Definição"
+ * para o que ainda não dá para dimensionar, "?" para quem não sabe opinar.
  */
 
 export interface Card {
@@ -42,25 +46,25 @@ export const DECKS: Record<Exclude<DeckId, 'custom'>, Deck> = {
     id: 'fibonacci',
     name: 'Fibonacci',
     description: 'O clássico do planning poker. Os saltos crescem junto com a incerteza.',
-    cards: numeric(0, 0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89),
+    cards: numeric(0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89),
   },
   fibonacci_mod: {
     id: 'fibonacci_mod',
     name: 'Fibonacci modificada',
     description: 'Arredonda os números grandes. É o baralho mais vendido para Scrum.',
-    cards: numeric(0, 0.5, 1, 2, 3, 5, 8, 13, 20, 40, 100),
+    cards: numeric(0.5, 1, 2, 3, 5, 8, 13, 20, 40, 100),
   },
   linear: {
     id: 'linear',
     name: 'Linear',
     description: 'De 1 a 10, sem saltos. Bom para tarefas parecidas entre si.',
-    cards: numeric(0, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+    cards: numeric(0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
   },
   powers: {
     id: 'powers',
     name: 'Potências de 2',
     description: 'Cada carta dobra a anterior. Força a decidir a ordem de grandeza.',
-    cards: numeric(0, 0.5, 1, 2, 4, 8, 16, 32, 64),
+    cards: numeric(0.5, 1, 2, 4, 8, 16, 32, 64),
   },
   tshirt: {
     id: 'tshirt',
@@ -121,6 +125,9 @@ export function parseCustomDeck(input: string): { cards: Card[]; error: string |
     const value = Number(part.replace(',', '.'))
     if (Number.isNaN(value)) return { cards: [], error: `"${part}" não é um número` }
     if (value < 0) return { cards: [], error: 'Não use valores negativos' }
+    // Zero não é estimativa: se alguém fez, vale alguma coisa. História que
+    // ainda não dá para dimensionar tem a carta "Ag. Definição".
+    if (value === 0) return { cards: [], error: 'Zero não vale como estimativa — use "Ag. Definição"' }
     if (value > 999) return { cards: [], error: 'Valores até 999' }
     if (cards.some((c) => c.value === value)) continue
     cards.push({ label: formatPoints(value), value })
