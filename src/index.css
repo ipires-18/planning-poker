@@ -1,0 +1,233 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------
+   Planning Poker — design tokens
+   Direção: lúdico e colorido. Base violeta profunda, acentos vibrantes,
+   cantos generosos e movimento com mola.
+------------------------------------------------------------------ */
+
+@theme {
+  /* Marca */
+  --color-brand-50: #f3f0ff;
+  --color-brand-100: #e9e2ff;
+  --color-brand-200: #d5c8ff;
+  --color-brand-300: #b8a1ff;
+  --color-brand-400: #9670ff;
+  --color-brand-500: #7c3aed;
+  --color-brand-600: #6d28d9;
+  --color-brand-700: #5b21b6;
+  --color-brand-800: #4c1d95;
+  --color-brand-900: #2e1065;
+  --color-brand-950: #1a0b3d;
+
+  /* Acentos — usados por naipe de card e por papel */
+  --color-punch: #ec4899; /* rosa */
+  --color-zest: #f59e0b; /* âmbar */
+  --color-mint: #10b981; /* verde */
+  --color-sky: #06b6d4; /* ciano */
+  --color-grape: #a855f7; /* uva */
+  --color-coral: #fb7185; /* coral */
+
+  /* Tipografia */
+  --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Raios generosos = sensação de brinquedo */
+  --radius-card: 1.5rem;
+  --radius-blob: 2.5rem;
+
+  /* Molas */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Superfícies semânticas — trocadas no dark mode */
+:root {
+  --surface-base: #f7f5ff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #ece8fb;
+  --surface-border: #e0d9f5;
+  --text-strong: #1a0b3d;
+  --text-muted: #6b5f8a;
+  --text-subtle: #9b90b8;
+  --glow: 0 18px 40px -20px rgb(124 58 237 / 0.45);
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'],
+html.dark {
+  --surface-base: #120a26;
+  --surface-raised: #1c1038;
+  --surface-sunken: #0c0519;
+  --surface-border: #2f2154;
+  --text-strong: #f5f1ff;
+  --text-muted: #b4a6d6;
+  --text-subtle: #7a6b9e;
+  --glow: 0 18px 50px -18px rgb(168 85 247 / 0.55);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-surface: var(--surface-base);
+  --color-raised: var(--surface-raised);
+  --color-sunken: var(--surface-sunken);
+  --color-hairline: var(--surface-border);
+  --color-ink: var(--text-strong);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-subtle: var(--text-subtle);
+}
+
+@layer base {
+  * {
+    border-color: var(--surface-border);
+  }
+
+  body {
+    background-color: var(--surface-base);
+    color: var(--text-strong);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* O fundo tem duas manchas de cor que respiram devagar. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 40rem at 12% -10%, rgb(124 58 237 / 0.18), transparent 60%),
+      radial-gradient(50rem 38rem at 92% 8%, rgb(236 72 153 / 0.14), transparent 60%),
+      radial-gradient(44rem 32rem at 50% 108%, rgb(6 182 212 / 0.12), transparent 60%);
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-brand-400),
+      var(--color-punch),
+      var(--color-zest)
+    );
+    background-clip: text;
+    color: transparent;
+  }
+
+  .card-surface {
+    background-color: var(--surface-raised);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--glow);
+  }
+
+  /* Brilho de borda animado, para o elemento em foco da rodada. */
+  .ring-rainbow {
+    position: relative;
+  }
+  .ring-rainbow::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: conic-gradient(
+      from var(--spin, 0deg),
+      var(--color-brand-400),
+      var(--color-punch),
+      var(--color-zest),
+      var(--color-mint),
+      var(--color-brand-400)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: spin-hue 4s linear infinite;
+    pointer-events: none;
+  }
+}
+
+@property --spin {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes spin-hue {
+  to {
+    --spin: 360deg;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.86) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes flip-reveal {
+  0% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+@keyframes float-idle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(-10vh) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(110vh) rotate(720deg);
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.45s var(--ease-spring) both;
+}
+.animate-float-idle {
+  animation: float-idle 3.5s var(--ease-out-soft) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
