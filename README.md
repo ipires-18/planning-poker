@@ -57,6 +57,14 @@ banco guarda as duas regras separadas: `role_scores()` é fixa por papel,
 apaga a carta dela, senão ficaria um voto contando para a revelação de quem não
 deveria mais ter baralho.
 
+**Teto de 5 sessões abertas por pessoa.** Conta só o que está de pé: encerrar
+libera vaga na hora, e sessões paradas há mais de sete dias deixam de ocupar
+vaga sozinhas — porque muita gente fecha a aba em vez de clicar em "Encerrar",
+e cinco sessões abandonadas travando alguém por trinta dias teria cara de bug,
+não de proteção. O limite não é muralha: com login anônimo dá para pedir um
+usuário novo por sala, e quem segura isso é o rate limit de sign-in por IP do
+Supabase. O que ele faz é barrar o laço acidental e encarecer o abuso.
+
 **Não existe carta de 0.** Zero não é estimativa: se a história foi feita, ela
 vale alguma coisa — e uma história de 0 ponto ainda consome dia de alguém sem
 aparecer na capacidade do time, o que faz o planejamento mentir. Os casos que
@@ -99,6 +107,7 @@ Resumo do que protege o quê:
 | Chave no código | Nenhuma: tudo vem de `.env.local`, que está no `.gitignore` |
 | Função com privilégio | As 29 `security definer` fixam `search_path` |
 | Clickjacking / MIME / CSP | Cabeçalhos no `vercel.json` |
+| Enchente de salas | Teto de 5 sessões abertas por pessoa |
 
 
 O ponto central do projeto: **o voto é escondido pelo Postgres, não pelo React.**

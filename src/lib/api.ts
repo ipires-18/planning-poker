@@ -80,6 +80,17 @@ export async function setTeamCapacity(roomId: string, entries: CapacityEntry[]) 
   )
 }
 
+/** Quantas sessões abertas você tem. O teto é 5. */
+export const MAX_OPEN_ROOMS = 5
+
+export async function myActiveRooms(): Promise<number> {
+  const { data, error } = await supabase.rpc('my_active_rooms')
+  // Falhar aqui não pode impedir de montar a sprint: o banco recusa de novo na
+  // hora de criar, e com a mensagem certa.
+  if (error) return 0
+  return (data as number) ?? 0
+}
+
 export async function roomExists(roomId: string): Promise<boolean> {
   const { data, error } = await supabase.from('rooms').select('id').eq('id', roomId).maybeSingle()
   if (error) return false

@@ -559,6 +559,60 @@ const { error: longSprint } = await po.client.rpc('set_sprint_window', {
 })
 check('sprint absurdamente longa é recusada', Boolean(longSprint))
 
+// A sala da fila já cumpriu seu papel; encerrar devolve a vaga do PO.
+await po.client.rpc('end_game', { p_room_id: roomB })
+
+/* ------------------------------------------------ teto de sessões abertas --- */
+console.log('\nTeto de sessões por pessoa')
+
+const limitado = await newUser('Limitado')
+const abrirSala = (nome) =>
+  limitado.client.rpc('create_room', {
+    p_session_name: nome,
+    p_host_name: 'Dono',
+    p_stories: [{ title: 'X', link: null, kind: 'frontend' }],
+  })
+
+const criadas = []
+for (let i = 1; i <= 5; i++) {
+  const { data, error } = await abrirSala(`Sala ${i}`)
+  if (error) { bad(`quinta sala deveria passar (${i})`, error.message); break }
+  criadas.push(data)
+}
+check('cinco sessões abertas passam', criadas.length === 5, `criou ${criadas.length}`)
+
+const { data: contagem } = await limitado.client.rpc('my_active_rooms')
+check('my_active_rooms devolve 5', contagem === 5, `veio ${contagem}`)
+
+const { error: sexta } = await abrirSala('Sala 6')
+check('a sexta é recusada', Boolean(sexta))
+check(
+  'e a mensagem diz como liberar vaga',
+  /encerre/i.test(sexta?.message ?? ''),
+  sexta?.message,
+)
+
+// Encerrar devolve a vaga na hora.
+await limitado.client.rpc('end_game', { p_room_id: criadas[0] })
+const { data: aposEncerrar } = await limitado.client.rpc('my_active_rooms')
+check('encerrar libera uma vaga', aposEncerrar === 4, `veio ${aposEncerrar}`)
+
+const { data: sextaAgora, error: sextaErro } = await abrirSala('Sala 6 de novo')
+check('com vaga livre, a criação volta a passar', Boolean(sextaAgora) && !sextaErro, sextaErro?.message)
+
+// O teto é por pessoa, não global.
+const outro = await newUser('Outro dono')
+const { error: outroErro } = await outro.client.rpc('create_room', {
+  p_session_name: 'Sala de outra pessoa',
+  p_host_name: 'Outro',
+  p_stories: [{ title: 'X', link: null, kind: 'frontend' }],
+})
+check('o teto é por pessoa, não do sistema inteiro', !outroErro, outroErro?.message)
+
+await po.client.rpc('end_game', { p_room_id: roomC })
+await po.client.rpc('end_game', { p_room_id: roomD })
+await po.client.rpc('end_game', { p_room_id: roomE })
+
 /* ------------------------------------------------------- link da história --- */
 console.log('\nLink da história')
 
@@ -606,6 +660,8 @@ const { error: directHostile } = await po.client
   .update({ link: 'javascript:alert(1)' })
   .eq('id', storyL.id)
 check('nem escrita direta na tabela passa link hostil', Boolean(directHostile))
+
+await po.client.rpc('end_game', { p_room_id: roomL })
 
 /* ------------------------------------------------------------------- QA --- */
 console.log('\nQA na cerimônia')

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, ErrorNote, Field, Input } from '@/components/ui'
+import { cx } from '@/lib/cx'
 import { DeckPicker } from '@/components/DeckPicker'
 import { SprintWindowPicker } from '@/components/SprintWindowPicker'
 import { StoryEditor, StoryQueue } from '@/components/StoryQueue'
 import { useSprintDraft } from '@/hooks/useSprintDraft'
+import { useRoomQuota } from '@/hooks/useRoomQuota'
 import { createRoom } from '@/lib/api'
 
 const BLANK_STORY = { title: '', link: '', kind: 'both' } as const
@@ -12,6 +14,7 @@ const BLANK_STORY = { title: '', link: '', kind: 'both' } as const
 export default function SprintSetup() {
   const navigate = useNavigate()
   const draft = useSprintDraft()
+  const quota = useRoomQuota()
 
   const [error, setError] = useState('')
   const [creating, setCreating] = useState(false)
@@ -140,9 +143,28 @@ export default function SprintSetup() {
           />
         </div>
 
+        {quota.shouldWarn && !error && (
+          <p
+            className={cx(
+              'rounded-2xl px-4 py-3 text-sm font-semibold',
+              quota.isFull ? 'bg-coral/10 text-coral' : 'bg-zest/10 text-zest',
+            )}
+          >
+            {quota.isFull
+              ? `Você já tem ${quota.max} sessões abertas, que é o limite. Encerre uma delas para criar outra.`
+              : 'Esta é a sua última sessão disponível. Encerrar as antigas libera vaga.'}
+          </p>
+        )}
+
         <ErrorNote>{error}</ErrorNote>
 
-        <Button type="submit" variant="joy" size="lg" disabled={creating} className="w-full">
+        <Button
+          type="submit"
+          variant="joy"
+          size="lg"
+          disabled={creating || quota.isFull}
+          className="w-full"
+        >
           {creating ? 'Preparando a mesa...' : 'Criar sessão e começar'}
         </Button>
       </form>
