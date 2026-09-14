@@ -4,6 +4,8 @@ Estimativa de sprint em tempo real para times ágeis. Entra pelo link, escolhe a
 carta, e ninguém vê o voto de ninguém antes da revelação — garantido pelo banco,
 não pela interface.
 
+**No ar:** <https://planning-poker-sable-one.vercel.app>
+
 **Stack:** Turborepo · pnpm · React 19 · TypeScript · Vite · Tailwind v4 ·
 React Aria · shadcn/ui · Supabase (Postgres, RLS, Realtime) · Docusaurus
 
