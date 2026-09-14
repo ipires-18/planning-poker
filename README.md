@@ -84,6 +84,11 @@ select cron.schedule('purge-rooms', '0 4 * * *', 'select purge_expired_rooms()')
 | `npm run build` | Checagem de tipos + build de produção |
 | `npm run preview` | Serve o build local |
 | `npm run lint` | Lint com oxlint |
+| `npm run db:start` | Sobe um Supabase local em Docker |
+| `npm run db:reset` | Recria o banco local a partir das migrations |
+| `npm run smoke` | Roda as verificações de ponta a ponta |
+| `npm run seed` | Cria uma sala de demonstração já povoada |
+| `npm run seed ABC123` | Povoa uma sala existente com 4 participantes |
 
 ## Estrutura
 
