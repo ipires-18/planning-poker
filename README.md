@@ -16,8 +16,19 @@ não pela interface.
   Todas incluem o meio ponto.
 - **Histórias editáveis a qualquer momento** — o PO edita, reordena e exclui,
   tanto ao montar a sprint quanto com a sessão em andamento.
-- **Papéis**: Product Owner, Tech Lead, Front-End, Back-End, QA. PO e Tech Lead
-  conduzem; o PO acompanha sem pontuar.
+- **Papéis**: Product Owner, Tech Lead, Front-End, Back-End e QA — com "quem
+  vota" e "quem recebe pontos" separados:
+
+  | Papel | Vota | Recebe pontos |
+  |---|---|---|
+  | Product Owner | não | não |
+  | Tech Lead | sim | sim |
+  | Front-End / Back-End | sim | sim |
+  | QA | conforme a sala | não |
+
+  A QA está na cerimônia para conhecer as histórias e levantar pontos, mas não é
+  dona de entrega. Se ela recebe baralho é decisão do PO ou do Tech Lead, sessão
+  a sessão.
 - **Histórias tipadas** — só front, só back, ou ambos. Uma história "ambos" é
   votada duas vezes, um lado de cada vez.
 - **Votação oculta** com revelação simultânea e carta que vira em 3D.
@@ -35,7 +46,14 @@ não pela interface.
   de cor quando o time passa do que cabe.
 - **Tema claro e escuro.**
 
-## Duas decisões que valem explicar
+## Três decisões que valem explicar
+
+**Votar e pontuar são coisas diferentes.** Colar os dois é o que obrigaria a QA
+a carregar story points para poder opinar, ou a ficar muda para não carregar. O
+banco guarda as duas regras separadas: `role_scores()` é fixa por papel,
+`player_can_vote()` depende da sala. Desligar o voto da QA no meio de uma rodada
+apaga a carta dela, senão ficaria um voto contando para a revelação de quem não
+deveria mais ter baralho.
 
 **Camisetas sem quebrar a conta.** Cada carta guarda um rótulo e um valor:
 `{ label: "M", value: 3 }`. A mesa mostra a letra, a divisão de pontos usa o

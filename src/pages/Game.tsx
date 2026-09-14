@@ -14,8 +14,23 @@ import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
 import { useRoomState } from '@/hooks/useRoomState'
 import * as api from '@/lib/api'
-import { averageStorySeconds, scorersOf, sprintIsComplete, summarize, teamCapacity } from '@/lib/derive'
-import { ROLE_ACCENT, type Allocation, type CapacityEntry, type VotingSide } from '@/types'
+import {
+  averageStorySeconds,
+  scorersOf,
+  sprintIsComplete,
+  summarize,
+  teamCapacity,
+  votersOf,
+  watchersOf,
+} from '@/lib/derive'
+import {
+  ROLE_ACCENT,
+  ROLE_SHORT,
+  roleVotes,
+  type Allocation,
+  type CapacityEntry,
+  type VotingSide,
+} from '@/types'
 
 export default function Game() {
   const { roomId = '' } = useParams()
@@ -54,10 +69,16 @@ export default function Game() {
 
   const summaries = useMemo(() => (state ? summarize(state) : []), [state])
   const scorers = useMemo(() => (state ? scorersOf(state.players) : []), [state])
-  const observers = useMemo(
-    () => state?.players.filter((p) => p.role === 'po') ?? [],
+  const voters = useMemo(
+    () => (state ? votersOf(state.players, state.room.qa_votes) : []),
     [state],
   )
+  /** Na cerimônia, mas sem carta na mão. */
+  const watchers = useMemo(
+    () => (state ? watchersOf(state.players, state.room.qa_votes) : []),
+    [state],
+  )
+  const iVote = Boolean(state && me && roleVotes(me.role, state.room.qa_votes))
 
   const capacity = useMemo(
     () =>
@@ -236,8 +257,8 @@ export default function Game() {
 
   // `roundVotes` só traz o que a RLS deixa ver — antes da revelação, apenas o
   // seu próprio voto. Quem conta é a luz pública na cadeira.
-  const votedCount = scorers.filter((p) => p.has_voted).length
-  const expected = scorers.length
+  const votedCount = voters.filter((p) => p.has_voted).length
+  const expected = voters.length
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -263,7 +284,13 @@ export default function Game() {
       )}
 
       <div className="flex flex-1">
-        <Roster summaries={summaries} capacity={capacity!} online={online} youId={userId} />
+        <Roster
+            summaries={summaries}
+            capacity={capacity!}
+            watchers={watchers}
+            online={online}
+            youId={userId}
+          />
 
         <main className="flex min-w-0 flex-1 flex-col">
           {complete ? (
@@ -298,7 +325,7 @@ export default function Game() {
               {/* Mesa */}
               <div className="flex flex-1 flex-col items-center justify-center gap-10 px-4 py-10 sm:px-6">
                 <div className="grid w-full max-w-4xl grid-cols-3 justify-items-center gap-x-6 gap-y-10 sm:grid-cols-4 lg:grid-cols-5">
-                  {scorers.map((player) => {
+                  {voters.map((player) => {
                     const cast = roundVotes.find((v) => v.player_id === player.id)
                     return (
                       <PlayerSeat
@@ -314,10 +341,10 @@ export default function Game() {
                   })}
                 </div>
 
-                {observers.length > 0 && (
-                  <div className="flex items-center gap-3 text-xs font-bold text-ink-subtle">
-                    <span className="uppercase tracking-[0.16em]">Observando</span>
-                    {observers.map((p) => (
+                {watchers.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-bold text-ink-subtle">
+                    <span className="uppercase tracking-[0.16em]">Na cerimônia</span>
+                    {watchers.map((p) => (
                       <span key={p.id} className="flex items-center gap-1.5">
                         <Avatar
                           name={p.name}
@@ -327,6 +354,12 @@ export default function Game() {
                         />
                         {p.name}
                         {p.user_id === userId && ' (você)'}
+                        <span
+                          className="text-[9px] font-black uppercase tracking-wider"
+                          style={{ color: ROLE_ACCENT[p.role] }}
+                        >
+                          {ROLE_SHORT[p.role]}
+                        </span>
                       </span>
                     ))}
                   </div>
@@ -361,8 +394,8 @@ export default function Game() {
                 )}
               </div>
 
-              {/* O PO observa; quem pontua tem o baralho. */}
-              {me && me.role !== 'po' && currentStory && (
+              {/* Só quem vota nesta sala recebe baralho. */}
+              {iVote && currentStory && (
                 <CardDeck
                   scale={state.room.point_scale}
                   selected={myVote}
@@ -422,7 +455,7 @@ export default function Game() {
       <Modal
         open={capacityOpen}
         onClose={() => setCapacityOpen(false)}
-        title="Capacidade do time"
+        title="Time e capacidade"
         size="lg"
       >
         {capacity && (
@@ -433,6 +466,14 @@ export default function Game() {
               days: state.room.sprint_days,
               holidays: state.room.holidays ?? [],
             }}
+            qaVotes={state.room.qa_votes}
+            qaPresent={state.players.some((p) => p.role === 'qa')}
+            onToggleQaVoting={(enabled) =>
+              void run(async () => {
+                await api.setQaVoting(roomId, enabled)
+                await refresh()
+              })
+            }
             onSaveWindow={saveSprintWindow}
             onSaveCapacity={saveCapacity}
           />

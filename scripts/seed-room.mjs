@@ -117,13 +117,20 @@ async function actor({ name, role, pick }) {
     .eq('room_id', roomId)
     .order('position')
 
-  const card = pickCard(state.point_scale, pick)
   const story = stories?.[state.current_story_index]
   if (!story) {
     console.log(`  ${name} (${role}) entrou — a sprint já acabou, ninguém votou`)
     return
   }
 
+  // A QA só tem baralho se a sala estiver configurada para isso; o PO nunca tem.
+  const votes = role === 'po' ? false : role === 'qa' ? state.qa_votes : true
+  if (!votes) {
+    console.log(`  ${name} (${role}) entrou — acompanha sem votar`)
+    return
+  }
+
+  const card = pickCard(state.point_scale, pick)
   const { error: voteError } = await client.rpc('cast_vote', {
     p_room_id: roomId,
     p_story_id: story.id,

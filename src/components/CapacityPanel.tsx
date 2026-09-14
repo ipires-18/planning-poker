@@ -8,11 +8,22 @@ import { ROLE_ACCENT, ROLE_SHORT, type CapacityEntry } from '@/types'
 interface Props {
   capacity: TeamCapacity
   sprint: { start: string; days: number; holidays: Holiday[] }
+  qaVotes: boolean
+  qaPresent: boolean
+  onToggleQaVoting: (enabled: boolean) => void
   onSaveWindow: (next: { start: string; days: number; holidays: Holiday[] }) => Promise<void>
   onSaveCapacity: (entries: CapacityEntry[]) => Promise<void>
 }
 
-export function CapacityPanel({ capacity, sprint, onSaveWindow, onSaveCapacity }: Props) {
+export function CapacityPanel({
+  capacity,
+  sprint,
+  qaVotes,
+  qaPresent,
+  onToggleQaVoting,
+  onSaveWindow,
+  onSaveCapacity,
+}: Props) {
   const [draft, setDraft] = useState(sprint)
   const [rows, setRows] = useState<Record<string, { capacity: number; daysOff: number }>>(
     () =>
@@ -69,7 +80,37 @@ export function CapacityPanel({ capacity, sprint, onSaveWindow, onSaveCapacity }
 
   return (
     <div className="space-y-6">
+      {/* Quem vota. A QA participa da cerimônia de qualquer jeito; o que muda
+          aqui é se ela recebe baralho. Pontuação ela não recebe em nenhum caso. */}
       <section>
+        <h3 className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
+          Quem vota
+        </h3>
+        <label
+          className={cx(
+            'flex cursor-pointer items-start gap-3 rounded-2xl p-4 transition-colors',
+            qaVotes ? 'bg-brand-500/10' : 'bg-[var(--surface-sunken)]',
+          )}
+        >
+          <input
+            type="checkbox"
+            checked={qaVotes}
+            onChange={(e) => onToggleQaVoting(e.target.checked)}
+            className="mt-0.5 h-4 w-4 cursor-pointer accent-brand-500"
+          />
+          <span className="min-w-0">
+            <span className="block text-sm font-bold text-ink">A QA vota nesta sessão</span>
+            <span className="mt-1 block text-xs leading-snug text-ink-subtle">
+              Desligado, a QA acompanha as histórias e levanta pontos sem carta na mão.
+              Em qualquer um dos casos ela não recebe pontuação — quem carrega story
+              point é Tech Lead, Front e Back.
+              {!qaPresent && ' Nenhuma QA sentou à mesa ainda.'}
+            </span>
+          </span>
+        </label>
+      </section>
+
+      <section className="border-t border-hairline pt-6">
         <h3 className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
           Janela da sprint
         </h3>
@@ -88,7 +129,8 @@ export function CapacityPanel({ capacity, sprint, onSaveWindow, onSaveCapacity }
               Quanto cada um assume
             </h3>
             <p className="mt-1 text-xs text-ink-subtle">
-              Em pontos. Quem faltar dias tem menos dias disponíveis.
+              Em pontos, só para quem é dono de entrega. Quem faltar dias tem menos
+              dias disponíveis.
             </p>
           </div>
 
@@ -113,7 +155,7 @@ export function CapacityPanel({ capacity, sprint, onSaveWindow, onSaveCapacity }
 
         {capacity.rows.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-hairline py-8 text-center text-sm text-ink-subtle">
-            Ninguém sentou à mesa ainda. Convide o time e volte aqui.
+            Ninguém que pontua sentou à mesa ainda. Convide o time e volte aqui.
           </p>
         ) : (
           <ul className="space-y-2">

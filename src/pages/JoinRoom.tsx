@@ -145,8 +145,10 @@ export default function JoinRoom() {
                   )
                 })}
               </div>
-              <p className="mt-3 text-xs text-ink-subtle">
-                Tech Lead também pode revelar cartas e fechar a pontuação.
+              <p className="mt-3 text-xs leading-relaxed text-ink-subtle">
+                Tech Lead também revela cartas e fecha a pontuação. A QA acompanha a
+                cerimônia sem receber story points — se ela vota ou não é o PO ou o
+                Tech Lead quem decide.
               </p>
             </fieldset>
 

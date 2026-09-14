@@ -1,15 +1,17 @@
 import { Avatar, cx } from './ui'
-import { ROLE_ACCENT, ROLE_SHORT } from '@/types'
+import { ROLE_ACCENT, ROLE_LABEL, ROLE_SHORT, type Player } from '@/types'
 import type { PlayerSummary, TeamCapacity } from '@/lib/derive'
 
 interface Props {
   summaries: PlayerSummary[]
   capacity: TeamCapacity
+  /** Quem está na cerimônia sem carta — PO e, quando não vota, a QA. */
+  watchers: Player[]
   online: Set<string>
   youId: string | null
 }
 
-export function Roster({ summaries, capacity, online, youId }: Props) {
+export function Roster({ summaries, capacity, watchers, online, youId }: Props) {
   const byPlayer = new Map(capacity.rows.map((r) => [r.player.id, r]))
 
   return (
@@ -127,6 +129,46 @@ export function Roster({ summaries, capacity, online, youId }: Props) {
           )
         })}
       </ul>
+
+      {/* Quem acompanha sem pontuar aparece aqui, e não some da sessão só por
+          não carregar pontos. */}
+      {watchers.length > 0 && (
+        <div className="mt-6 border-t border-hairline pt-4">
+          <h2 className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-ink-subtle">
+            Acompanhando
+          </h2>
+          <ul className="space-y-2">
+            {watchers.map((player) => {
+              const accent = ROLE_ACCENT[player.role]
+              return (
+                <li key={player.id} className="flex items-center gap-3 px-3">
+                  <Avatar
+                    name={player.name}
+                    color={accent}
+                    size={26}
+                    dimmed={!online.has(player.user_id)}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-bold text-ink">
+                      {player.name}
+                      {player.user_id === youId && (
+                        <span className="text-ink-subtle"> (você)</span>
+                      )}
+                    </p>
+                    <span
+                      className="text-[9px] font-black uppercase tracking-[0.1em]"
+                      style={{ color: accent }}
+                      title={`${ROLE_LABEL[player.role]} — não recebe pontuação`}
+                    >
+                      {ROLE_SHORT[player.role]} · não pontua
+                    </span>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
 
       {/* Rodapé: dias úteis da janela, que é de onde a capacidade sai. */}
       <div className="mt-5 border-t border-hairline pt-4 text-[10px] font-black uppercase tracking-wider text-ink-subtle">

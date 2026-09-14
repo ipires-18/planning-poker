@@ -24,6 +24,8 @@ export interface Room {
   sprint_start: string
   sprint_days: number
   holidays: Holiday[]
+  /** Se a QA recebe baralho nesta sessão. Quem define é o PO / Tech Lead. */
+  qa_votes: boolean
 }
 
 export interface Player {
@@ -125,6 +127,23 @@ export const ROLE_ACCENT: Record<PlayerRole, string> = {
   frontend: 'var(--color-sky)',
   backend: 'var(--color-mint)',
   qa: 'var(--color-punch)',
+}
+
+/**
+ * Quem é dono de entrega e por isso recebe pontos.
+ *
+ * O PO conduz e a QA acompanha para conhecer as histórias e levantar pontos —
+ * nenhum dos dois carrega story points. Já votar é outra conversa: a QA pode ou
+ * não ter baralho, e isso é decidido por sala.
+ */
+export function roleScores(role: PlayerRole): boolean {
+  return role === 'tech_lead' || role === 'frontend' || role === 'backend'
+}
+
+export function roleVotes(role: PlayerRole, qaVotes: boolean): boolean {
+  if (role === 'po') return false
+  if (role === 'qa') return qaVotes
+  return true
 }
 
 export const KIND_LABEL: Record<StoryKind, string> = {

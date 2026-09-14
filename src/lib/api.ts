@@ -233,6 +233,10 @@ export async function adjustParticipantPoints(
   )
 }
 
+export async function setQaVoting(roomId: string, enabled: boolean) {
+  fail((await supabase.rpc('set_qa_voting', { p_room_id: roomId, p_enabled: enabled })).error)
+}
+
 export async function endGame(roomId: string) {
   fail((await supabase.rpc('end_game', { p_room_id: roomId })).error)
 }

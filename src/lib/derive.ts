@@ -1,4 +1,5 @@
 import { windowStats, type WindowStats } from './holidays'
+import { roleScores, roleVotes } from '@/types'
 import type { Player, RoomState, Story, StoryParticipant, VotingSide } from '@/types'
 
 export interface ScoredStory {
@@ -16,9 +17,19 @@ export interface PlayerSummary {
   stories: ScoredStory[]
 }
 
-/** O PO acompanha a sessão mas não recebe pontos. */
+/** Quem recebe pontos: Tech Lead, Front e Back. */
 export function scorersOf(players: Player[]): Player[] {
-  return players.filter((p) => p.role !== 'po')
+  return players.filter((p) => roleScores(p.role))
+}
+
+/** Quem tem baralho na mão nesta sala. */
+export function votersOf(players: Player[], qaVotes: boolean): Player[] {
+  return players.filter((p) => roleVotes(p.role, qaVotes))
+}
+
+/** Quem está na cerimônia sem carta: o PO, e a QA quando ela não vota. */
+export function watchersOf(players: Player[], qaVotes: boolean): Player[] {
+  return players.filter((p) => !roleVotes(p.role, qaVotes))
 }
 
 /** Quebra dos pontos por pessoa, na ordem do ranking. */

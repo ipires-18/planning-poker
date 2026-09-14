@@ -70,6 +70,10 @@ const anaId = joins[0].data
 const brunoId = joins[1].data
 const carlaId = joins[2].data
 
+// Carla entrou como QA. Ligamos o voto dela para exercitar o caso mais
+// interessante do modelo: vota, aparece na mesa, e mesmo assim não pontua.
+await po.client.rpc('set_qa_voting', { p_room_id: roomId, p_enabled: true })
+
 const { count: seatCount } = await po.client
   .from('players')
   .select('*', { count: 'exact', head: true })
@@ -174,11 +178,20 @@ const { error: commitError } = await po.client.rpc('commit_story', {
   p_points: 8,
   p_allocations: [
     { player_id: anaId, points: 5, pending: false },
-    { player_id: brunoId, points: 2, pending: false },
-    { player_id: carlaId, points: 1, pending: false },
+    { player_id: brunoId, points: 3, pending: false },
   ],
 })
 check('commit_story aceita divisão que fecha', !commitError, commitError?.message)
+
+const { error: carlaShare } = await po.client.rpc('commit_story', {
+  p_room_id: roomId,
+  p_points: 8,
+  p_allocations: [
+    { player_id: anaId, points: 4, pending: false },
+    { player_id: carlaId, points: 4, pending: false },
+  ],
+})
+check('a QA vota mas continua fora da divisão de pontos', Boolean(carlaShare))
 
 const { data: roomAfter } = await po.client.from('rooms').select('*').eq('id', roomId).single()
 check('história "both": avança de front para back, sem trocar de história', roomAfter.current_side === 'backend' && roomAfter.current_story_index === 0)
@@ -410,15 +423,14 @@ check('baralho gravado na sala', roomCRow.deck_id === 'tshirt' && roomCRow.point
 check('carta "M" vale 3 na conta', roomCRow.point_scale.find((c) => c.label === 'M').value === 3)
 
 // A API não pode aceitar carta fora do baralho da sala.
-const { data: anaC } = await po.client.from('players').select('id').eq('room_id', roomC).limit(1).single()
-void anaC
+await ana.client.rpc('join_room', { p_room_id: roomC, p_name: 'Ana', p_role: 'frontend' })
 const { data: storiesC } = await po.client.from('stories').select('*').eq('room_id', roomC)
-const { error: foreignCard } = await po.client.rpc('cast_vote', {
+const { error: foreignCard } = await ana.client.rpc('cast_vote', {
   p_room_id: roomC, p_story_id: storiesC[0].id, p_side: 'frontend', p_round: 1, p_value: '13',
 })
 check('carta fora do baralho da sala é recusada', Boolean(foreignCard))
 
-const { error: validCard } = await po.client.rpc('cast_vote', {
+const { error: validCard } = await ana.client.rpc('cast_vote', {
   p_room_id: roomC, p_story_id: storiesC[0].id, p_side: 'frontend', p_round: 1, p_value: 'M',
 })
 check('carta do baralho da sala é aceita', !validCard, validCard?.message)
@@ -529,6 +541,100 @@ const { error: longSprint } = await po.client.rpc('set_sprint_window', {
   p_room_id: roomE, p_start: '2026-06-01', p_days: 200, p_holidays: [],
 })
 check('sprint absurdamente longa é recusada', Boolean(longSprint))
+
+/* ------------------------------------------------------------------- QA --- */
+console.log('\nQA na cerimônia')
+
+const { data: roomQ } = await po.client.rpc('create_room', {
+  p_session_name: 'Sprint com QA',
+  p_host_name: 'Iago (PO)',
+  p_stories: [{ title: 'História qualquer', link: null, kind: 'frontend' }],
+})
+
+const devQ = await ana.client.rpc('join_room', { p_room_id: roomQ, p_name: 'Ana', p_role: 'frontend' })
+const qaQ = await carla.client.rpc('join_room', { p_room_id: roomQ, p_name: 'Carla', p_role: 'qa' })
+
+const { data: roomQRow } = await po.client.from('rooms').select('qa_votes').eq('id', roomQ).single()
+check('por padrão a QA não vota', roomQRow.qa_votes === false)
+
+const { data: storiesQ } = await po.client.from('stories').select('*').eq('room_id', roomQ)
+const voteAs = (client, value) =>
+  client.rpc('cast_vote', {
+    p_room_id: roomQ, p_story_id: storiesQ[0].id, p_side: 'frontend', p_round: 1, p_value: value,
+  })
+
+const { error: qaBlocked } = await voteAs(carla.client, '5')
+check('com a QA desligada, o voto dela é recusado pelo banco', Boolean(qaBlocked))
+
+const { error: poBlocked } = await voteAs(po.client, '5')
+check('o PO nunca vota', Boolean(poBlocked))
+
+const { error: devVote } = await voteAs(ana.client, '5')
+check('quem é dono de entrega vota normalmente', !devVote, devVote?.message)
+
+// --- ligar a QA ---
+const { error: carlaToggle } = await carla.client.rpc('set_qa_voting', {
+  p_room_id: roomQ, p_enabled: true,
+})
+check('a própria QA não liga o próprio voto', Boolean(carlaToggle))
+
+const { error: toggleError } = await po.client.rpc('set_qa_voting', {
+  p_room_id: roomQ, p_enabled: true,
+})
+check('PO liga o voto da QA', !toggleError, toggleError?.message)
+
+const { error: qaAllowed } = await voteAs(carla.client, '8')
+check('com a QA ligada, ela vota', !qaAllowed, qaAllowed?.message)
+
+// --- desligar no meio da rodada limpa o voto dela ---
+await po.client.rpc('set_qa_voting', { p_room_id: roomQ, p_enabled: false })
+const { data: qaSeat } = await po.client.from('players').select('has_voted').eq('id', qaQ.data).single()
+check('desligar limpa o voto e apaga a carta da QA', qaSeat.has_voted === false)
+
+const { data: roundVotes } = await po.client.from('players').select('id, has_voted').eq('room_id', roomQ)
+check(
+  'o voto de quem pontua continua de pé',
+  roundVotes.find((p) => p.id === devQ.data).has_voted === true,
+)
+
+// --- pontuação nunca vai para a QA ---
+await po.client.rpc('reveal_round', { p_room_id: roomQ })
+const { error: qaPoints } = await po.client.rpc('commit_story', {
+  p_room_id: roomQ,
+  p_points: 5,
+  p_allocations: [
+    { player_id: devQ.data, points: 3, pending: false },
+    { player_id: qaQ.data, points: 2, pending: false },
+  ],
+})
+check('não dá para distribuir pontos para a QA', Boolean(qaPoints))
+
+const { data: poSeat } = await po.client.from('players').select('id').eq('room_id', roomQ).eq('role', 'po').single()
+const { error: poPoints } = await po.client.rpc('commit_story', {
+  p_room_id: roomQ,
+  p_points: 5,
+  p_allocations: [{ player_id: poSeat.id, points: 5, pending: false }],
+})
+check('nem para o PO', Boolean(poPoints))
+
+const { error: okPoints } = await po.client.rpc('commit_story', {
+  p_room_id: roomQ,
+  p_points: 5,
+  p_allocations: [{ player_id: devQ.data, points: 5, pending: false }],
+})
+check('a divisão entre quem pontua passa', !okPoints, okPoints?.message)
+
+// --- capacidade também não ---
+await po.client.rpc('set_team_capacity', {
+  p_room_id: roomQ,
+  p_entries: [{ player_id: qaQ.data, capacity_points: 10, days_off: 0 }],
+})
+const { data: qaCapacity } = await po.client.from('players').select('capacity_points').eq('id', qaQ.data).single()
+check(
+  'a QA não recebe capacidade',
+  Number(qaCapacity.capacity_points) === 0,
+  `ficou com ${qaCapacity.capacity_points}`,
+)
 
 /* ------------------------------------------------------------- encerrar --- */
 console.log('\nEncerramento')
