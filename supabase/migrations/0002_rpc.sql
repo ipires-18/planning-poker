@@ -355,7 +355,7 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
--- add_story — acrescenta ao fim da fila, inclusive com a sprint já encerrada
+-- add_story — acrescenta ao fim da fila, inclusive com a planning já fechada
 -- ----------------------------------------------------------------------------
 create or replace function add_story(
   p_room_id text,

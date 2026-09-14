@@ -12,6 +12,8 @@ import { WatchersStrip } from './WatchersStrip'
 import { VoteProgress } from './VoteProgress'
 import { StoriesModal } from './StoriesModal'
 import { CapacityModal } from './CapacityModal'
+import { EndSessionModal } from './EndSessionModal'
+import { PausedScreen } from './PausedScreen'
 import { useGameActions } from '@/hooks/useGameActions'
 import { useTheme } from '@/hooks/useTheme'
 import { buildGameView } from '@/lib/gameView'
@@ -33,6 +35,7 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
 
   const [storiesOpen, setStoriesOpen] = useState(false)
   const [capacityOpen, setCapacityOpen] = useState(false)
+  const [endOpen, setEndOpen] = useState(false)
 
   const view = useMemo(() => buildGameView(state, userId), [state, userId])
   const { room } = state
@@ -42,8 +45,19 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
 
   const openStories = () => setStoriesOpen(true)
 
-  const endGame = () => {
-    if (window.confirm('Encerrar a sessão para todo mundo?')) void actions.endGame()
+  // A sala pausada tem tela própria: mostra de onde o time continua, e o start
+  // fica com quem conduz.
+  if (room.ended && room.to_continue) {
+    return (
+      <PausedScreen
+        room={room}
+        stories={state.stories}
+        summaries={view.summaries}
+        isHost={view.isHost}
+        onResume={actions.resumeGame}
+        onLeave={() => navigate('/')}
+      />
+    )
   }
 
   return (
@@ -59,7 +73,7 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
         onToggleTheme={toggle}
         onReveal={() => void actions.reveal()}
         onAddStory={openStories}
-        onEndGame={endGame}
+        onEndGame={() => setEndOpen(true)}
         onOpenCapacity={view.isHost ? () => setCapacityOpen(true) : undefined}
       />
 
@@ -169,6 +183,13 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
         onEdit={actions.editStory}
         onRemove={actions.removeStory}
         onReorder={actions.reorderStories}
+      />
+
+      <EndSessionModal
+        open={endOpen}
+        onClose={() => setEndOpen(false)}
+        pending={Math.max(0, state.stories.length - room.current_story_index)}
+        onEnd={actions.endGame}
       />
 
       <CapacityModal

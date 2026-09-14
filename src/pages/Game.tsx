@@ -28,8 +28,11 @@ export default function Game() {
   }, [loading, ready, state, iAmSeated, roomId, navigate])
 
   useEffect(() => {
-    if (state?.room.ended) navigate('/', { replace: true })
-  }, [state?.room.ended, navigate])
+    // Pausada não é encerrada: quem chega numa dessas vê a tela de retomar,
+    // não a porta fechada.
+    const finished = state?.room.ended && !state.room.to_continue
+    if (finished) navigate('/', { replace: true })
+  }, [state?.room.ended, state?.room.to_continue, navigate])
 
   if (!ready || loading) {
     return (

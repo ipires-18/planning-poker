@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
  * Comemoração de consenso.
  *
  * Movimento deliberadamente diferente do confete de fim de sprint: aquele cai,
- * este explode do centro para fora. Se os dois fossem iguais, o fim da sprint
+ * este explode do centro para fora. Se os dois fossem iguais, o fim da planning
  * perderia o peso de ser o momento maior.
  */
 

@@ -15,6 +15,7 @@ export default function JoinRoom() {
   const { userId, ready } = useAuth()
 
   const [sessionName, setSessionName] = useState<string | null>(null)
+  const [paused, setPaused] = useState(false)
   const [name, setName] = useState('')
   const [role, setRole] = useState<PlayerRole>('frontend')
   const [error, setError] = useState('')
@@ -28,7 +29,7 @@ export default function JoinRoom() {
     ;(async () => {
       const { data: room } = await supabase
         .from('rooms')
-        .select('session_name, ended')
+        .select('session_name, ended, to_continue')
         .eq('id', roomId)
         .maybeSingle()
 
@@ -38,12 +39,15 @@ export default function JoinRoom() {
         setChecking(false)
         return
       }
-      if (room.ended) {
-        setError('Esta sessão já foi encerrada.')
+      // Pausada ainda recebe gente: a planning volta em outro dia, e quem chega
+      // agora já fica na sala esperando o start.
+      if (room.ended && !room.to_continue) {
+        setError('Esta planning já foi finalizada.')
         setChecking(false)
         return
       }
       setSessionName(room.session_name)
+      setPaused(room.to_continue)
 
       // Já tem cadeira nesta sala? Vai direto para a mesa. É o que faz
       // recarregar a página não pedir seu nome de novo.
@@ -97,7 +101,13 @@ export default function JoinRoom() {
           <h1 className="mt-2 text-3xl font-black tracking-tight">
             {sessionName ?? 'Entrar na sessão'}
           </h1>
-          {sessionName && <p className="mt-2 text-sm text-ink-muted">O time já está esperando.</p>}
+          {sessionName && (
+            <p className="mt-2 text-sm text-ink-muted">
+              {paused
+                ? 'Esta planning está pausada. Entre agora e espere o start.'
+                : 'O time já está esperando.'}
+            </p>
+          )}
         </div>
 
         {sessionName ? (

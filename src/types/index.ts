@@ -18,6 +18,8 @@ export interface Room {
   revealed: boolean
   current_round: number
   ended: boolean
+  /** Pausada: a sessão de hoje acabou, mas a planning continua em outro dia. */
+  to_continue: boolean
   created_at: string
   expires_at: string
   /** Janela da sprint — base para os dias úteis e a capacidade do time. */

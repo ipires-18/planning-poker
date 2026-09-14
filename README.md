@@ -45,7 +45,10 @@ não pela interface.
   cada um assume. O cabeçalho mostra o comprometido contra a capacidade, e muda
   de cor quando o time passa do que cabe.
 - **Comemoração de consenso** quando o time inteiro crava a mesma carta — uma
-  explosão que sai do centro da mesa, diferente do confete do fim da sprint.
+  explosão que sai do centro da mesa, diferente do confete do fim da planning.
+- **Parar hoje e continuar em outro dia**: quando sobram histórias na fila,
+  encerrar vira uma escolha. Pausada, a sala guarda o histórico por sete dias e
+  o PO ou Tech Lead dá o start de onde o time parou — com 24 horas novas.
 - **Tema claro e escuro.**
 
 ## Quatro decisões que valem explicar
@@ -63,6 +66,12 @@ DELETE em tabela nenhuma — só as de leitura. Toda escrita passa por função
 `players_update` aberta, qualquer participante podia rodar
 `update players set role = 'tech_lead'` na própria linha, virar host e revelar
 as cartas para ler o voto de todo mundo antes da hora.
+
+**Encerrar são duas coisas.** A sessão de hoje acabou, e a planning acabou — e
+a planning fica no *começo* da sprint, não no fim. Com fila pendente, o time
+quase sempre quer a primeira: pausar, e voltar amanhã de onde parou. Pausada, a
+sala fica visível para quem chega pelo link, aceita gente nova, e o start é do
+PO ou do Tech Lead.
 
 **Sala de 24 horas.** Uma cerimônia dura duas; guardar o resto depois disso é
 armazenar dado de gente por nada — e o resumo final já sai da sala pelo botão de
@@ -119,7 +128,7 @@ Resumo do que protege o quê:
 | Clickjacking / MIME / CSP | Cabeçalhos no `vercel.json` |
 | Enchente de salas | Teto de 5 sessões abertas por pessoa |
 | Escrita fora das regras | Nenhuma policy de escrita: tudo passa pelas funções |
-| Dado parado | Sala expira em 24 horas e some na faxina |
+| Dado parado | Sala expira em 24 horas (7 dias se pausada) e some na faxina |
 
 
 O ponto central do projeto: **o voto é escondido pelo Postgres, não pelo React.**

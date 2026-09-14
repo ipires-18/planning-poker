@@ -248,6 +248,13 @@ export async function setQaVoting(roomId: string, enabled: boolean) {
   fail((await supabase.rpc('set_qa_voting', { p_room_id: roomId, p_enabled: enabled })).error)
 }
 
-export async function endGame(roomId: string) {
-  fail((await supabase.rpc('end_game', { p_room_id: roomId })).error)
+/** `continueLater` pausa em vez de encerrar de vez: o histórico fica esperando. */
+export async function endGame(roomId: string, continueLater: boolean) {
+  fail(
+    (await supabase.rpc('end_game', { p_room_id: roomId, p_continue: continueLater })).error,
+  )
+}
+
+export async function resumeGame(roomId: string) {
+  fail((await supabase.rpc('resume_game', { p_room_id: roomId })).error)
 }

@@ -560,7 +560,7 @@ const { error: longSprint } = await po.client.rpc('set_sprint_window', {
 check('sprint absurdamente longa é recusada', Boolean(longSprint))
 
 // A sala da fila já cumpriu seu papel; encerrar devolve a vaga do PO.
-await po.client.rpc('end_game', { p_room_id: roomB })
+await po.client.rpc('end_game', { p_room_id: roomB, p_continue: false })
 
 /* ------------------------------------------------ teto de sessões abertas --- */
 console.log('\nTeto de sessões por pessoa')
@@ -593,7 +593,7 @@ check(
 )
 
 // Encerrar devolve a vaga na hora.
-await limitado.client.rpc('end_game', { p_room_id: criadas[0] })
+await limitado.client.rpc('end_game', { p_room_id: criadas[0], p_continue: false })
 const { data: aposEncerrar } = await limitado.client.rpc('my_active_rooms')
 check('encerrar libera uma vaga', aposEncerrar === 4, `veio ${aposEncerrar}`)
 
@@ -609,9 +609,9 @@ const { error: outroErro } = await outro.client.rpc('create_room', {
 })
 check('o teto é por pessoa, não do sistema inteiro', !outroErro, outroErro?.message)
 
-await po.client.rpc('end_game', { p_room_id: roomC })
-await po.client.rpc('end_game', { p_room_id: roomD })
-await po.client.rpc('end_game', { p_room_id: roomE })
+await po.client.rpc('end_game', { p_room_id: roomC, p_continue: false })
+await po.client.rpc('end_game', { p_room_id: roomD, p_continue: false })
+await po.client.rpc('end_game', { p_room_id: roomE, p_continue: false })
 
 /* ------------------------------------------------------- link da história --- */
 console.log('\nLink da história')
@@ -665,7 +665,7 @@ check(
   String(linkDepois.link),
 )
 
-await po.client.rpc('end_game', { p_room_id: roomL })
+await po.client.rpc('end_game', { p_room_id: roomL, p_continue: false })
 
 /* ------------------------------------------------------------------- QA --- */
 console.log('\nQA na cerimônia')
@@ -761,6 +761,139 @@ check(
   `ficou com ${qaCapacity.capacity_points}`,
 )
 
+/* --------------------------------------------------- pausar e continuar --- */
+console.log('\nPausar hoje, continuar em outro dia')
+
+const dono = await newUser('Dono da pausa')
+const { data: roomP } = await dono.client.rpc('create_room', {
+  p_session_name: 'Planning em duas partes',
+  p_host_name: 'Dono',
+  p_stories: [
+    { title: 'Primeira', link: null, kind: 'frontend' },
+    { title: 'Segunda', link: null, kind: 'frontend' },
+    { title: 'Terceira', link: null, kind: 'frontend' },
+  ],
+})
+const devP = await ana.client.rpc('join_room', { p_room_id: roomP, p_name: 'Ana', p_role: 'frontend' })
+const { data: storiesP } = await dono.client.from('stories').select('*').eq('room_id', roomP).order('position')
+
+// Pontua a primeira, para haver histórico a preservar.
+await ana.client.rpc('cast_vote', {
+  p_room_id: roomP, p_story_id: storiesP[0].id, p_side: 'frontend', p_round: 1, p_value: '5',
+})
+await dono.client.rpc('start_story_timer', { p_story_id: storiesP[0].id })
+await dono.client.rpc('reveal_round', { p_room_id: roomP })
+await dono.client.rpc('commit_story', {
+  p_room_id: roomP, p_points: 5, p_allocations: [{ player_id: devP.data, points: 5, pending: false }],
+})
+
+const { error: pausa } = await dono.client.rpc('end_game', { p_room_id: roomP, p_continue: true })
+check('pausa com histórias na fila', !pausa, pausa?.message)
+
+const { data: pausada } = await dono.client.from('rooms').select('*').eq('id', roomP).single()
+check('fica marcada como pausada', pausada.ended === true && pausada.to_continue === true)
+check(
+  'e a validade estica para sete dias',
+  (new Date(pausada.expires_at) - Date.now()) / 36e5 > 24,
+  `${Math.round((new Date(pausada.expires_at) - Date.now()) / 36e5)}h`,
+)
+
+const { data: anaPts } = await dono.client.from('players').select('accumulated_points').eq('id', devP.data).single()
+check('o histórico continua lá', Number(anaPts.accumulated_points) === 5)
+
+// Quem chega depois ainda entra: a planning vai voltar.
+const atrasado = await newUser('Atrasado')
+const { error: entrouPausada } = await atrasado.client.rpc('join_room', {
+  p_room_id: roomP, p_name: 'Atrasado', p_role: 'backend',
+})
+check('dá para entrar numa sala pausada', !entrouPausada, entrouPausada?.message)
+
+// A tela lê a sala antes de entrar nela, então ler tem que funcionar para
+// quem ainda é de fora. Os RPCs ignoram RLS e não pegariam essa falha.
+const deFora = await newUser('De fora')
+const { data: vistaDeFora } = await deFora.client
+  .from('rooms').select('session_name, to_continue').eq('id', roomP).maybeSingle()
+check('quem ainda não entrou consegue ler a sala pausada', Boolean(vistaDeFora))
+
+const { error: anaRetoma } = await ana.client.rpc('resume_game', { p_room_id: roomP })
+check('participante comum não dá o start', Boolean(anaRetoma))
+
+const { error: retomou } = await dono.client.rpc('resume_game', { p_room_id: roomP })
+check('PO retoma', !retomou, retomou?.message)
+
+const { data: retomada } = await dono.client.from('rooms').select('*').eq('id', roomP).single()
+check('volta a rolar', retomada.ended === false && retomada.to_continue === false)
+check(
+  'o relógio zera em 24 horas de novo',
+  Math.round((new Date(retomada.expires_at) - Date.now()) / 36e5) === 24,
+  `${Math.round((new Date(retomada.expires_at) - Date.now()) / 36e5)}h`,
+)
+check('continua na história de onde parou', retomada.current_story_index === 1)
+check('rodada nova, cartas de costas', retomada.revealed === false)
+
+const { data: seatsP } = await dono.client.from('players').select('has_voted').eq('room_id', roomP)
+check('ninguém entra votado', seatsP.every((p) => !p.has_voted))
+
+const { data: storyAtual } = await dono.client
+  .from('stories').select('started_at').eq('room_id', roomP).eq('position', 1).single()
+check('o cronômetro da história corrente recomeça', storyAtual.started_at === null)
+
+const { data: storyFeita } = await dono.client
+  .from('stories').select('started_at, ended_at, frontend_points').eq('room_id', roomP).eq('position', 0).single()
+check(
+  'mas a história já fechada mantém tempo e pontos',
+  storyFeita.ended_at !== null && Number(storyFeita.frontend_points) === 5,
+)
+
+// Retomar duas vezes não faz sentido.
+const { error: duasVezes } = await dono.client.rpc('resume_game', { p_room_id: roomP })
+check('não dá para retomar o que já está rolando', Boolean(duasVezes))
+
+// Sem fila pendente, pausar não quer dizer nada.
+const donoCurto = await newUser('Dono curto')
+const { data: roomCurto } = await donoCurto.client.rpc('create_room', {
+  p_session_name: 'Uma história só',
+  p_host_name: 'Dono',
+  p_stories: [{ title: 'Única', link: null, kind: 'frontend' }],
+})
+await donoCurto.client.from('rooms').select('id').eq('id', roomCurto)
+const devCurto = await bruno.client.rpc('join_room', { p_room_id: roomCurto, p_name: 'Bruno', p_role: 'backend' })
+const { data: stCurto } = await donoCurto.client.from('stories').select('id').eq('room_id', roomCurto).single()
+await bruno.client.rpc('cast_vote', {
+  p_room_id: roomCurto, p_story_id: stCurto.id, p_side: 'frontend', p_round: 1, p_value: '3',
+})
+await donoCurto.client.rpc('reveal_round', { p_room_id: roomCurto })
+await donoCurto.client.rpc('commit_story', {
+  p_room_id: roomCurto, p_points: 3, p_allocations: [{ player_id: devCurto.data, points: 3, pending: false }],
+})
+
+const { error: pausaVazia } = await donoCurto.client.rpc('end_game', {
+  p_room_id: roomCurto, p_continue: true,
+})
+check('pausar sem fila pendente é recusado', Boolean(pausaVazia))
+
+const { error: finalizou } = await donoCurto.client.rpc('end_game', {
+  p_room_id: roomCurto, p_continue: false,
+})
+check('finalizar a planning passa', !finalizou, finalizou?.message)
+
+const { error: retomarFinalizada } = await donoCurto.client.rpc('resume_game', { p_room_id: roomCurto })
+check('planning finalizada não se retoma', Boolean(retomarFinalizada))
+
+const { error: entrarFinalizada } = await atrasado.client.rpc('join_room', {
+  p_room_id: roomCurto, p_name: 'Tarde demais', p_role: 'qa',
+})
+check('nem se entra nela', Boolean(entrarFinalizada))
+
+// A cota conta sala pausada, que é trabalho em aberto.
+await dono.client.rpc('end_game', { p_room_id: roomP, p_continue: true })
+const { data: cotaDono } = await dono.client.rpc('my_active_rooms')
+check('sala pausada ocupa vaga na cota', cotaDono === 1, `veio ${cotaDono}`)
+
+await dono.client.rpc('end_game', { p_room_id: roomP, p_continue: false })
+const { data: cotaDepois } = await dono.client.rpc('my_active_rooms')
+check('finalizar de vez libera a vaga', cotaDepois === 0, `veio ${cotaDepois}`)
+
 /* ------------------------------------------- escrita direta nas tabelas --- */
 console.log('\nEscrita direta nas tabelas (sem passar pelos RPCs)')
 
@@ -815,7 +948,7 @@ const { count: sobraram } = await alvo.client
   .from('stories').select('*', { count: 'exact', head: true }).eq('room_id', roomX)
 check('nem apaga história por fora do RPC', sobraram === 1, `sobrou ${sobraram}`)
 
-await alvo.client.rpc('end_game', { p_room_id: roomX })
+await alvo.client.rpc('end_game', { p_room_id: roomX, p_continue: false })
 
 /* --------------------------------------------------------------- validade --- */
 console.log('\nValidade da sala')
