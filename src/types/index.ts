@@ -1,22 +1,16 @@
+import type { Card, DeckId } from '@/lib/decks'
+
+export type { Card, DeckId }
+
 export type PlayerRole = 'po' | 'tech_lead' | 'frontend' | 'backend' | 'qa'
 export type StoryKind = 'frontend' | 'backend' | 'both'
 export type VotingSide = 'frontend' | 'backend'
 
-/** Valor de uma carta. Números pontuam; os demais são sinalizações. */
-export type CardValue = number | '?' | '☕' | 'Ag. Definição'
-
-export const PENDING_CARD = 'Ag. Definição' as const
-export const UNSURE_CARD = '?' as const
-export const BREAK_CARD = '☕' as const
-
-export const POINT_SCALE: CardValue[] = [
-  0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, UNSURE_CARD, BREAK_CARD, PENDING_CARD,
-]
-
 export interface Room {
   id: string
   session_name: string
-  point_scale: CardValue[]
+  deck_id: DeckId
+  point_scale: Card[]
   owner_user_id: string
   current_story_index: number
   current_side: VotingSide
@@ -61,6 +55,7 @@ export interface Vote {
   player_id: string
   side: VotingSide
   round: number
+  /** O rótulo da carta, não o valor — é o que a mesa mostra ao revelar. */
   value: string
   created_at: string
 }
@@ -122,12 +117,8 @@ export const KIND_LABEL: Record<StoryKind, string> = {
   both: 'Front & Back',
 }
 
-export function isNumericCard(value: CardValue | string): value is number {
-  return typeof value === 'number' || (value !== '' && !Number.isNaN(Number(value)))
-}
-
-export function parseCard(raw: string): CardValue {
-  if (raw === UNSURE_CARD || raw === BREAK_CARD || raw === PENDING_CARD) return raw
-  const n = Number(raw)
-  return Number.isNaN(n) ? (raw as CardValue) : n
+export const KIND_COLOR: Record<StoryKind, string> = {
+  frontend: 'var(--color-sky)',
+  backend: 'var(--color-mint)',
+  both: 'var(--color-grape)',
 }

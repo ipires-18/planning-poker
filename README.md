@@ -11,6 +11,11 @@ não pela interface.
 ## O que ele faz
 
 - **Sessões por código de 6 caracteres** — entra pelo link, sem cadastro.
+- **Seis estilos de pontuação**: Fibonacci, Fibonacci modificada, linear,
+  potências de 2, camisetas (PP–XGG) e uma escala personalizada que você digita.
+  Todas incluem o meio ponto.
+- **Histórias editáveis a qualquer momento** — o PO edita, reordena e exclui,
+  tanto ao montar a sprint quanto com a sessão em andamento.
 - **Papéis**: Product Owner, Tech Lead, Front-End, Back-End, QA. PO e Tech Lead
   conduzem; o PO acompanha sem pontuar.
 - **Histórias tipadas** — só front, só back, ou ambos. Uma história "ambos" é
@@ -25,6 +30,18 @@ não pela interface.
   o contador de votos.
 - **Resumo final** copiável em texto plano, com correção manual de pontos.
 - **Tema claro e escuro.**
+
+## Duas decisões que valem explicar
+
+**Camisetas sem quebrar a conta.** Cada carta guarda um rótulo e um valor:
+`{ label: "M", value: 3 }`. A mesa mostra a letra, a divisão de pontos usa o
+número. É o que permite tamanhos de camiseta num app que reparte pontos entre
+as pessoas.
+
+**Histórias já pontuadas não se movem.** Reordenar e excluir valem para a fila
+pendente; as encerradas ficam onde estão, senão o resumo da sessão passaria a
+contar outra coisa. Excluir uma história já pontuada é permitido — o PO pode ter
+errado — mas os pontos voltam de quem os recebeu, na mesma transação.
 
 ## Como a segurança funciona
 

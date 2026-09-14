@@ -1,6 +1,8 @@
 import { supabase } from './supabase'
 import type {
   Allocation,
+  Card,
+  DeckId,
   Player,
   PlayerRole,
   Room,
@@ -33,11 +35,15 @@ export async function createRoom(
   sessionName: string,
   hostName: string,
   stories: DraftStory[],
+  deckId: DeckId,
+  pointScale: Card[],
 ): Promise<string> {
   const { data, error } = await supabase.rpc('create_room', {
     p_session_name: sessionName,
     p_host_name: hostName,
     p_stories: stories.map((s) => ({ title: s.title, link: s.link ?? null, kind: s.kind })),
+    p_deck_id: deckId,
+    p_point_scale: pointScale,
   })
   fail(error)
   return data as string
@@ -143,6 +149,35 @@ export async function addStory(roomId: string, title: string, link: string, kind
 
 export async function setStoryKind(storyId: string, kind: StoryKind) {
   fail((await supabase.rpc('set_story_kind', { p_story_id: storyId, p_kind: kind })).error)
+}
+
+export async function updateStory(
+  storyId: string,
+  title: string,
+  link: string,
+  kind: StoryKind,
+) {
+  fail(
+    (
+      await supabase.rpc('update_story', {
+        p_story_id: storyId,
+        p_title: title,
+        p_link: link || null,
+        p_kind: kind,
+      })
+    ).error,
+  )
+}
+
+export async function deleteStory(storyId: string) {
+  fail((await supabase.rpc('delete_story', { p_story_id: storyId })).error)
+}
+
+/** `storyIds` é a nova ordem da fila pendente, da história atual em diante. */
+export async function reorderStories(roomId: string, storyIds: string[]) {
+  fail(
+    (await supabase.rpc('reorder_stories', { p_room_id: roomId, p_story_ids: storyIds })).error,
+  )
 }
 
 export async function startStoryTimer(storyId: string) {

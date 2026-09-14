@@ -1,16 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Avatar, Badge, Button, Input, Select, cx } from './ui'
-import {
-  PENDING_CARD,
-  POINT_SCALE,
-  ROLE_ACCENT,
-  ROLE_SHORT,
-  type Allocation,
-  type Player,
-} from '@/types'
+import { PENDING, cardByLabel, formatPoints, scoringCards, type Card } from '@/lib/decks'
+import { ROLE_ACCENT, ROLE_SHORT, type Allocation, type Player } from '@/types'
 
 interface Props {
-  votes: { player: Player; value: string }[]
+  /** Baralho em uso na sala — define o que cada carta vale. */
+  scale: Card[]
+  votes: { player: Player; label: string }[]
   /** Quem pode receber pontos — o PO observa, não pontua. */
   scorers: Player[]
   isHost: boolean
@@ -18,59 +14,68 @@ interface Props {
   onReset: () => void
 }
 
-export function ResultsPanel({ votes, scorers, isHost, onConfirm, onReset }: Props) {
-  const numeric = votes.map((v) => Number(v.value)).filter((n) => !Number.isNaN(n))
-  const suggested = numeric.length > 0 ? Math.max(...numeric) : null
-  const anyPending = votes.some((v) => v.value === PENDING_CARD)
+export function ResultsPanel({ scale, votes, scorers, isHost, onConfirm, onReset }: Props) {
+  const options = useMemo(() => scoringCards(scale), [scale])
 
-  const [total, setTotal] = useState<string>(() =>
-    suggested !== null ? String(suggested) : anyPending ? PENDING_CARD : '0',
+  /** O maior voto que pontua. É a sugestão padrão: quem viu mais risco. */
+  const suggested = useMemo(() => {
+    const values = votes
+      .map((v) => cardByLabel(scale, v.label)?.value)
+      .filter((n): n is number => typeof n === 'number')
+    if (values.length === 0) return null
+    const max = Math.max(...values)
+    return options.find((c) => c.value === max) ?? null
+  }, [votes, scale, options])
+
+  const someonePending = votes.some((v) => v.label === PENDING.label)
+
+  const [pending, setPending] = useState(suggested === null && someonePending)
+  const [totalLabel, setTotalLabel] = useState(
+    () => suggested?.label ?? options[0]?.label ?? '0',
   )
   const [split, setSplit] = useState<Record<string, number>>(() =>
     Object.fromEntries(scorers.map((p) => [p.id, 0])),
   )
   const [saving, setSaving] = useState(false)
 
-  const isPending = total === PENDING_CARD
-  const totalPoints = isPending ? 0 : Number(total) || 0
+  const totalPoints = cardByLabel(scale, totalLabel)?.value ?? 0
   const distributed = Object.values(split).reduce((sum, n) => sum + n, 0)
-  const remaining = isPending ? 0 : totalPoints - distributed
-  const balanced = isPending
+  const remaining = pending ? 0 : totalPoints - distributed
+  const balanced = pending
     ? Object.values(split).some((n) => n > 0)
     : Math.abs(remaining) < 0.001
 
   /** Agrupamento dos votos, para o painel de distribuição. */
   const tally = useMemo(() => {
     const groups = new Map<string, Player[]>()
-    for (const { value, player } of votes) {
-      groups.set(value, [...(groups.get(value) ?? []), player])
+    for (const { label, player } of votes) {
+      groups.set(label, [...(groups.get(label) ?? []), player])
     }
     return [...groups.entries()].sort(([a], [b]) => {
-      const na = Number(a)
-      const nb = Number(b)
-      if (Number.isNaN(na) && Number.isNaN(nb)) return a.localeCompare(b)
-      if (Number.isNaN(na)) return 1
-      if (Number.isNaN(nb)) return -1
-      return na - nb
+      const va = cardByLabel(scale, a)?.value
+      const vb = cardByLabel(scale, b)?.value
+      if (va == null && vb == null) return a.localeCompare(b)
+      if (va == null) return 1
+      if (vb == null) return -1
+      return va - vb
     })
-  }, [votes])
+  }, [votes, scale])
 
   const consensus = tally.length === 1
 
   const spreadEvenly = () => {
-    if (isPending || scorers.length === 0) return
+    if (pending || scorers.length === 0) return
 
     // Meio ponto é a menor fração que o time usa, então contamos em meios e
     // repartimos o resto de um em um. Arredondar cada pessoa e jogar a sobra
-    // numa só produzia valores negativos quando a sobra era grande — 9 pontos
-    // entre 12 pessoas deixava a primeira com -2.
+    // numa só produzia valores negativos quando a sobra era grande.
     const halves = Math.round(totalPoints * 2)
     const base = Math.floor(halves / scorers.length)
     const leftover = halves - base * scorers.length
 
     setSplit(
       Object.fromEntries(
-        scorers.map((p, index) => [p.id, ((base + (index < leftover ? 1 : 0)) * 0.5)]),
+        scorers.map((p, index) => [p.id, (base + (index < leftover ? 1 : 0)) * 0.5]),
       ),
     )
   }
@@ -80,11 +85,11 @@ export function ResultsPanel({ votes, scorers, isHost, onConfirm, onReset }: Pro
     setSaving(true)
     try {
       await onConfirm(
-        isPending ? null : totalPoints,
+        pending ? null : totalPoints,
         scorers.map((p) => ({
           player_id: p.id,
-          points: isPending ? 0 : (split[p.id] ?? 0),
-          pending: isPending && (split[p.id] ?? 0) > 0,
+          points: pending ? 0 : (split[p.id] ?? 0),
+          pending: pending && (split[p.id] ?? 0) > 0,
         })),
       )
     } finally {
@@ -104,18 +109,18 @@ export function ResultsPanel({ votes, scorers, isHost, onConfirm, onReset }: Pro
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {tally.map(([value, players]) => (
+          {tally.map(([label, players]) => (
             <div
-              key={value}
+              key={label}
               className="flex min-w-24 flex-1 flex-col items-center gap-2 rounded-2xl bg-[var(--surface-sunken)] p-4"
             >
               <span
                 className={cx(
                   'font-black text-ink',
-                  value.length > 3 ? 'text-xs uppercase' : 'text-3xl',
+                  label.length > 3 ? 'text-xs uppercase' : 'text-3xl',
                 )}
               >
-                {value}
+                {label}
               </span>
               <div className="flex -space-x-2">
                 {players.map((p) => (
@@ -144,25 +149,35 @@ export function ResultsPanel({ votes, scorers, isHost, onConfirm, onReset }: Pro
               <h3 className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
                 Pontuação da história
               </h3>
-              <p className="mt-1 text-xs text-ink-subtle">
-                Sugerido: o maior voto do time
-              </p>
+              <p className="mt-1 text-xs text-ink-subtle">Sugerido: o maior voto do time</p>
             </div>
+
             <div className="flex items-center gap-3">
-              <span className="text-4xl font-black text-gradient">{total}</span>
+              <span className="text-4xl font-black text-gradient">
+                {pending ? '—' : totalLabel}
+              </span>
               <Select
-                value={total}
-                onChange={(e) => setTotal(e.target.value)}
+                value={pending ? PENDING.label : totalLabel}
+                onChange={(e) => {
+                  const next = e.target.value
+                  if (next === PENDING.label) {
+                    setPending(true)
+                  } else {
+                    setPending(false)
+                    setTotalLabel(next)
+                  }
+                }}
                 aria-label="Pontos da história"
                 className="w-auto py-2 text-sm"
               >
-                {POINT_SCALE.filter(
-                  (v) => typeof v === 'number' || v === PENDING_CARD,
-                ).map((v) => (
-                  <option key={String(v)} value={String(v)}>
-                    {v}
+                {options.map((card) => (
+                  <option key={card.label} value={card.label}>
+                    {card.label}
+                    {card.label !== formatPoints(card.value ?? 0) &&
+                      ` (${formatPoints(card.value ?? 0)} pts)`}
                   </option>
                 ))}
+                <option value={PENDING.label}>{PENDING.label}</option>
               </Select>
             </div>
           </div>
@@ -171,9 +186,9 @@ export function ResultsPanel({ votes, scorers, isHost, onConfirm, onReset }: Pro
           <div>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h4 className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
-                {isPending ? 'Quem vai destravar?' : 'Divisão entre o time'}
+                {pending ? 'Quem vai destravar?' : 'Divisão entre o time'}
               </h4>
-              {!isPending && (
+              {!pending && (
                 <div className="flex items-center gap-3">
                   <Button size="sm" variant="ghost" onClick={spreadEvenly}>
                     Dividir igualmente
@@ -219,7 +234,7 @@ export function ResultsPanel({ votes, scorers, isHost, onConfirm, onReset }: Pro
                       </div>
                     </div>
 
-                    {isPending ? (
+                    {pending ? (
                       <label className="flex cursor-pointer items-center gap-2 rounded-xl bg-[var(--surface-raised)] px-3 py-2">
                         <span className="text-[10px] font-black uppercase tracking-wider text-ink-subtle">
                           Responsável
@@ -275,7 +290,7 @@ export function ResultsPanel({ votes, scorers, isHost, onConfirm, onReset }: Pro
                 ? 'Salvando...'
                 : balanced
                   ? 'Confirmar e ir para a próxima'
-                  : isPending
+                  : pending
                     ? 'Escolha ao menos um responsável'
                     : `Faltam ${Math.abs(Math.round(remaining * 10) / 10)} pts para distribuir`}
             </Button>

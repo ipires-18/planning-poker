@@ -265,6 +265,176 @@ const { error: anaAdjust } = await ana.client.rpc('adjust_participant_points', {
 })
 check('participante comum não corrige a própria pontuação', Boolean(anaAdjust))
 
+/* --------------------------------------------------- gestão das histórias --- */
+console.log('\nEdição, reordenação e exclusão de histórias')
+
+// Sala nova, limpa, para exercitar a fila sem herdar o estado acima.
+const { data: roomB } = await po.client.rpc('create_room', {
+  p_session_name: 'Sprint da fila',
+  p_host_name: 'Iago (PO)',
+  p_stories: [
+    { title: 'Primeira', link: null, kind: 'frontend' },
+    { title: 'Segunda', link: null, kind: 'frontend' },
+    { title: 'Terceira', link: null, kind: 'frontend' },
+  ],
+})
+await ana.client.rpc('join_room', { p_room_id: roomB, p_name: 'Ana', p_role: 'frontend' })
+await bruno.client.rpc('join_room', { p_room_id: roomB, p_name: 'Bruno', p_role: 'backend' })
+
+const listB = async () => {
+  const { data } = await po.client.from('stories').select('*').eq('room_id', roomB).order('position')
+  return data
+}
+
+let sB = await listB()
+check('três histórias em ordem', sB.map((x) => x.title).join() === 'Primeira,Segunda,Terceira')
+
+// --- editar ---
+const { error: editError } = await po.client.rpc('update_story', {
+  p_story_id: sB[1].id,
+  p_title: 'Segunda (revisada)',
+  p_link: 'https://jira.local/PP-9',
+  p_kind: 'both',
+})
+check('PO edita título, link e tipo', !editError, editError?.message)
+
+sB = await listB()
+check('edição gravada', sB[1].title === 'Segunda (revisada)' && sB[1].kind === 'both')
+
+const { error: anaEdit } = await ana.client.rpc('update_story', {
+  p_story_id: sB[1].id, p_title: 'hack', p_link: null, p_kind: 'frontend',
+})
+check('participante comum não edita história', Boolean(anaEdit))
+
+const { error: emptyTitle } = await po.client.rpc('update_story', {
+  p_story_id: sB[1].id, p_title: '   ', p_link: null, p_kind: 'frontend',
+})
+check('título vazio é recusado', Boolean(emptyTitle))
+
+// --- reordenar ---
+const { error: reorderError } = await po.client.rpc('reorder_stories', {
+  p_room_id: roomB,
+  p_story_ids: [sB[2].id, sB[0].id, sB[1].id],
+})
+check('PO reordena a fila', !reorderError, reorderError?.message)
+
+sB = await listB()
+check(
+  'nova ordem gravada',
+  sB.map((x) => x.title).join() === 'Terceira,Primeira,Segunda (revisada)',
+  sB.map((x) => x.title).join(),
+)
+
+const { data: roomBState } = await po.client.from('rooms').select('*').eq('id', roomB).single()
+check('trocar a história em votação abre rodada nova', roomBState.current_round === 2 && !roomBState.revealed)
+
+const { error: shortOrder } = await po.client.rpc('reorder_stories', {
+  p_room_id: roomB,
+  p_story_ids: [sB[0].id],
+})
+check('ordem incompleta é recusada', Boolean(shortOrder))
+
+const { error: anaReorder } = await ana.client.rpc('reorder_stories', {
+  p_room_id: roomB,
+  p_story_ids: sB.map((x) => x.id),
+})
+check('participante comum não reordena', Boolean(anaReorder))
+
+// --- excluir uma pendente ---
+const { error: delError } = await po.client.rpc('delete_story', { p_story_id: sB[2].id })
+check('PO exclui uma história pendente', !delError, delError?.message)
+
+sB = await listB()
+check('sobraram duas, numeradas sem buraco', sB.length === 2 && sB[0].position === 0 && sB[1].position === 1)
+
+// --- excluir uma já pontuada devolve os pontos ---
+const { data: anaB } = await po.client.from('players').select('id').eq('room_id', roomB).eq('name', 'Ana').single()
+const { data: brunoB } = await po.client.from('players').select('id').eq('room_id', roomB).eq('name', 'Bruno').single()
+
+const { data: roomB2 } = await po.client.from('rooms').select('*').eq('id', roomB).single()
+await ana.client.rpc('cast_vote', {
+  p_room_id: roomB, p_story_id: sB[roomB2.current_story_index].id,
+  p_side: roomB2.current_side, p_round: roomB2.current_round, p_value: '5',
+})
+await po.client.rpc('reveal_round', { p_room_id: roomB })
+await po.client.rpc('commit_story', {
+  p_room_id: roomB,
+  p_points: 5,
+  p_allocations: [
+    { player_id: anaB.id, points: 3, pending: false },
+    { player_id: brunoB.id, points: 2, pending: false },
+  ],
+})
+
+const { data: anaBefore } = await po.client.from('players').select('accumulated_points').eq('id', anaB.id).single()
+check('pontos creditados antes da exclusão', Number(anaBefore.accumulated_points) === 3)
+
+sB = await listB()
+const scored = sB.find((x) => x.frontend_points !== null || x.backend_points !== null)
+const { error: delScored } = await po.client.rpc('delete_story', { p_story_id: scored.id })
+check('PO exclui uma história já pontuada', !delScored, delScored?.message)
+
+const { data: anaAfterDelete } = await po.client.from('players').select('accumulated_points').eq('id', anaB.id).single()
+check(
+  'os pontos da história excluída voltam para quem os recebeu',
+  Number(anaAfterDelete.accumulated_points) === 0,
+  `sobrou ${anaAfterDelete.accumulated_points}`,
+)
+
+const { error: lastOne } = await po.client.rpc('delete_story', { p_story_id: (await listB())[0].id })
+check('não dá para deixar a sprint sem nenhuma história', Boolean(lastOne))
+
+const { error: anaDelete } = await ana.client.rpc('delete_story', { p_story_id: (await listB())[0].id })
+check('participante comum não exclui história', Boolean(anaDelete))
+
+/* --------------------------------------------------------------- baralhos --- */
+console.log('\nBaralhos de pontuação')
+
+const TSHIRT = [
+  { label: 'PP', value: 1 }, { label: 'P', value: 2 }, { label: 'M', value: 3 },
+  { label: 'G', value: 5 }, { label: 'GG', value: 8 }, { label: 'XGG', value: 13 },
+  { label: '?', value: null }, { label: '☕', value: null }, { label: 'Ag. Definição', value: null },
+]
+
+const { data: roomC, error: deckError } = await po.client.rpc('create_room', {
+  p_session_name: 'Sprint de camisetas',
+  p_host_name: 'Iago (PO)',
+  p_stories: [{ title: 'História tamanho M', link: null, kind: 'frontend' }],
+  p_deck_id: 'tshirt',
+  p_point_scale: TSHIRT,
+})
+check('cria sala com baralho de camisetas', !deckError, deckError?.message)
+
+const { data: roomCRow } = await po.client.from('rooms').select('*').eq('id', roomC).single()
+check('baralho gravado na sala', roomCRow.deck_id === 'tshirt' && roomCRow.point_scale.length === 9)
+check('carta "M" vale 3 na conta', roomCRow.point_scale.find((c) => c.label === 'M').value === 3)
+
+// A API não pode aceitar carta fora do baralho da sala.
+const { data: anaC } = await po.client.from('players').select('id').eq('room_id', roomC).limit(1).single()
+void anaC
+const { data: storiesC } = await po.client.from('stories').select('*').eq('room_id', roomC)
+const { error: foreignCard } = await po.client.rpc('cast_vote', {
+  p_room_id: roomC, p_story_id: storiesC[0].id, p_side: 'frontend', p_round: 1, p_value: '13',
+})
+check('carta fora do baralho da sala é recusada', Boolean(foreignCard))
+
+const { error: validCard } = await po.client.rpc('cast_vote', {
+  p_room_id: roomC, p_story_id: storiesC[0].id, p_side: 'frontend', p_round: 1, p_value: 'M',
+})
+check('carta do baralho da sala é aceita', !validCard, validCard?.message)
+
+const { data: roomD } = await po.client.rpc('create_room', {
+  p_session_name: 'Sprint padrão',
+  p_host_name: 'Iago (PO)',
+  p_stories: [{ title: 'Qualquer', link: null, kind: 'frontend' }],
+})
+const { data: roomDRow } = await po.client.from('rooms').select('*').eq('id', roomD).single()
+check('sem baralho informado, usa Fibonacci', roomDRow.deck_id === 'fibonacci')
+check(
+  'Fibonacci tem a carta de meio ponto',
+  roomDRow.point_scale.some((c) => c.value === 0.5),
+)
+
 /* ------------------------------------------------------------- encerrar --- */
 console.log('\nEncerramento')
 const { error: anaEnd } = await ana.client.rpc('end_game', { p_room_id: roomId })

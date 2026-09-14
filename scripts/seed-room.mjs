@@ -15,11 +15,17 @@ const KEY =
 const APP_URL = process.env.APP_URL ?? 'http://localhost:5173'
 
 const CAST = [
-  { name: 'Ana', role: 'frontend', card: '5' },
-  { name: 'Bruno', role: 'backend', card: '8' },
-  { name: 'Carla', role: 'qa', card: '5' },
-  { name: 'Diego', role: 'tech_lead', card: '13' },
+  { name: 'Ana', role: 'frontend', pick: 0.45 },
+  { name: 'Bruno', role: 'backend', pick: 0.65 },
+  { name: 'Carla', role: 'qa', pick: 0.45 },
+  { name: 'Diego', role: 'tech_lead', pick: 0.8 },
 ]
+
+/** Escolhe uma carta do baralho real da sala — pode ser camisetas, não números. */
+function pickCard(scale, ratio) {
+  const scoring = scale.filter((c) => c.value !== null)
+  return scoring[Math.min(scoring.length - 1, Math.floor(ratio * scoring.length))].label
+}
 
 const DEMO_STORIES = [
   { title: 'Tela de login com SSO', link: 'https://jira.local/PP-1', kind: 'both' },
@@ -94,7 +100,7 @@ if (roomId) {
   console.log(`\nSala de demonstração criada: ${roomId}\n`)
 }
 
-async function actor({ name, role, card }) {
+async function actor({ name, role, pick }) {
   const client = await signedIn()
 
   const { error } = await client.rpc('join_room', {
@@ -111,6 +117,7 @@ async function actor({ name, role, card }) {
     .eq('room_id', roomId)
     .order('position')
 
+  const card = pickCard(state.point_scale, pick)
   const story = stories?.[state.current_story_index]
   if (!story) {
     console.log(`  ${name} (${role}) entrou — a sprint já acabou, ninguém votou`)

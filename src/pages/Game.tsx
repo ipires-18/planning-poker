@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Avatar, Button, ErrorNote, Field, Input, Modal, Select, Spinner } from '@/components/ui'
+import { Avatar, Button, ErrorNote, Modal, Spinner } from '@/components/ui'
 import { RoomHeader } from '@/components/RoomHeader'
 import { Roster } from '@/components/Roster'
 import { PlayerSeat } from '@/components/PlayerSeat'
@@ -8,12 +8,13 @@ import { CardDeck } from '@/components/CardDeck'
 import { ResultsPanel } from '@/components/ResultsPanel'
 import { SprintSummary } from '@/components/SprintSummary'
 import { SprintProgress, StoryStage } from '@/components/StoryStage'
+import { StoryEditor, StoryQueue, type QueueItem, type StoryEdit } from '@/components/StoryQueue'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
 import { useRoomState } from '@/hooks/useRoomState'
 import * as api from '@/lib/api'
 import { averageStorySeconds, scorersOf, sprintIsComplete, summarize } from '@/lib/derive'
-import { KIND_LABEL, ROLE_ACCENT, type Allocation, type StoryKind, type VotingSide } from '@/types'
+import { ROLE_ACCENT, type Allocation, type VotingSide } from '@/types'
 
 export default function Game() {
   const { roomId = '' } = useParams()
@@ -23,10 +24,8 @@ export default function Game() {
   const { state, loading, error, online, refresh } = useRoomState(roomId, userId)
 
   const [actionError, setActionError] = useState('')
-  const [addOpen, setAddOpen] = useState(false)
-  const [newTitle, setNewTitle] = useState('')
-  const [newLink, setNewLink] = useState('')
-  const [newKind, setNewKind] = useState<StoryKind>('both')
+  const [storiesOpen, setStoriesOpen] = useState(false)
+  const [addingStory, setAddingStory] = useState(false)
 
   const me = state?.players.find((p) => p.user_id === userId) ?? null
 
@@ -55,6 +54,19 @@ export default function Game() {
   const scorers = useMemo(() => (state ? scorersOf(state.players) : []), [state])
   const observers = useMemo(
     () => state?.players.filter((p) => p.role === 'po') ?? [],
+    [state],
+  )
+
+  const storyItems: QueueItem[] = useMemo(
+    () =>
+      state?.stories.map((story, index) => ({
+        id: story.id,
+        title: story.title,
+        link: story.link,
+        kind: story.kind,
+        locked: index < state.room.current_story_index,
+        current: index === state.room.current_story_index,
+      })) ?? [],
     [state],
   )
 
@@ -115,16 +127,47 @@ export default function Game() {
     })
   }
 
-  const submitNewStory = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newTitle.trim()) return
+  /* --- gestão das histórias ------------------------------------------------ */
+
+  const addNewStory = async (edit: StoryEdit) => {
     await run(async () => {
-      await api.addStory(roomId, newTitle.trim(), newLink.trim(), newKind)
+      await api.addStory(roomId, edit.title, edit.link, edit.kind)
       await refresh()
-      setAddOpen(false)
-      setNewTitle('')
-      setNewLink('')
-      setNewKind('both')
+      setAddingStory(false)
+    })
+  }
+
+  const editStory = async (storyId: string, edit: StoryEdit) => {
+    await run(async () => {
+      await api.updateStory(storyId, edit.title, edit.link, edit.kind)
+      await refresh()
+    })
+  }
+
+  const removeStory = async (storyId: string) => {
+    await run(async () => {
+      await api.deleteStory(storyId)
+      await refresh()
+    })
+  }
+
+  /**
+   * Só a fila pendente se move — as histórias já pontuadas ficam onde estão,
+   * senão o resumo da sessão passaria a contar outra coisa.
+   */
+  const moveStory = async (storyId: string, delta: -1 | 1) => {
+    if (!state) return
+    const pending = state.stories.slice(state.room.current_story_index)
+    const from = pending.findIndex((s) => s.id === storyId)
+    const to = from + delta
+    if (from === -1 || to < 0 || to >= pending.length) return
+
+    const next = [...pending]
+    ;[next[from], next[to]] = [next[to], next[from]]
+
+    await run(async () => {
+      await api.reorderStories(roomId, next.map((s) => s.id))
+      await refresh()
     })
   }
 
@@ -178,7 +221,7 @@ export default function Game() {
         theme={theme}
         onToggleTheme={toggle}
         onReveal={() => void run(() => api.revealRound(roomId))}
-        onAddStory={() => setAddOpen(true)}
+        onAddStory={() => setStoriesOpen(true)}
         onEndGame={endGame}
       />
 
@@ -198,7 +241,7 @@ export default function Game() {
               averageSeconds={averageStorySeconds(state.stories)}
               isHost={isHost}
               onAdjust={adjust}
-              onAddStory={() => setAddOpen(true)}
+              onAddStory={() => setStoriesOpen(true)}
               onLeave={() => navigate('/')}
             />
           ) : (
@@ -261,10 +304,11 @@ export default function Game() {
                 {state.room.revealed ? (
                   <ResultsPanel
                     key={`${state.room.current_round}-${state.room.current_story_index}-${state.room.current_side}`}
+                    scale={state.room.point_scale}
                     votes={roundVotes
                       .map((v) => ({
                         player: state.players.find((p) => p.id === v.player_id)!,
-                        value: v.value,
+                        label: v.value,
                       }))
                       .filter((v) => v.player)}
                     scorers={scorers}
@@ -289,6 +333,7 @@ export default function Game() {
               {/* O PO observa; quem pontua tem o baralho. */}
               {me && me.role !== 'po' && currentStory && (
                 <CardDeck
+                  scale={state.room.point_scale}
                   selected={myVote}
                   onSelect={vote}
                   disabled={state.room.revealed}
@@ -299,41 +344,48 @@ export default function Game() {
         </main>
       </div>
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Nova história">
-        <form onSubmit={submitNewStory} className="space-y-5">
-          <Field label="Título">
-            <Input
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Ex: Refatorar o endpoint de busca"
-              maxLength={200}
-              autoFocus
+      <Modal
+        open={storiesOpen}
+        onClose={() => {
+          setStoriesOpen(false)
+          setAddingStory(false)
+        }}
+        title="Histórias da sprint"
+      >
+        <div className="space-y-5">
+          <p className="text-xs text-ink-subtle">
+            As já pontuadas ficam travadas no lugar — mexer nelas mudaria o resumo da
+            sessão. A fila pendente você reordena com ▲▼.
+          </p>
+
+          <div className="max-h-[45vh] overflow-y-auto pr-1">
+            <StoryQueue
+              items={storyItems}
+              onEdit={editStory}
+              onDelete={removeStory}
+              onMove={moveStory}
             />
-          </Field>
-          <Field label="Link do ticket" hint="Opcional">
-            <Input
-              value={newLink}
-              onChange={(e) => setNewLink(e.target.value)}
-              placeholder="https://..."
-              inputMode="url"
-            />
-          </Field>
-          <Field label="Tipo">
-            <Select value={newKind} onChange={(e) => setNewKind(e.target.value as StoryKind)}>
-              <option value="both">{KIND_LABEL.both}</option>
-              <option value="frontend">{KIND_LABEL.frontend}</option>
-              <option value="backend">{KIND_LABEL.backend}</option>
-            </Select>
-          </Field>
-          <div className="flex gap-3">
-            <Button type="button" variant="ghost" className="flex-1" onClick={() => setAddOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="joy" className="flex-1">
-              Adicionar
-            </Button>
           </div>
-        </form>
+
+          {addingStory ? (
+            <div className="card-surface p-4">
+              <StoryEditor
+                initial={{ title: '', link: '', kind: 'both' }}
+                saveLabel="Adicionar"
+                onSave={addNewStory}
+                onCancel={() => setAddingStory(false)}
+              />
+            </div>
+          ) : (
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => setAddingStory(true)}
+            >
+              + Nova história
+            </Button>
+          )}
+        </div>
       </Modal>
     </div>
   )

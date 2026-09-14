@@ -27,7 +27,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', icon, className, children, ...rest },
+  // `type` precisa cair em "button": um <button> sem type dentro de um <form>
+  // é submit por padrão, e um botão de editar dentro de um formulário acabava
+  // enviando o formulário inteiro. Quem submete diz isso explicitamente.
+  { variant = 'primary', size = 'md', icon, className, type = 'button', children, ...rest },
   ref,
 ) {
   const sizes = {
@@ -38,6 +41,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   return (
     <button
       ref={ref}
+      type={type}
       className={cx(
         'inline-flex items-center justify-center font-bold tracking-tight',
         'transition-all duration-300 [transition-timing-function:var(--ease-spring)]',

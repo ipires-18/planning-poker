@@ -1,17 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Badge, Button, ErrorNote, Field, Input, Select, cx } from '@/components/ui'
-import { createRoom, type DraftStory } from '@/lib/api'
+import { Button, ErrorNote, Field, Input, Select } from '@/components/ui'
+import { DeckPicker } from '@/components/DeckPicker'
+import { StoryQueue, type QueueItem, type StoryEdit } from '@/components/StoryQueue'
+import { createRoom } from '@/lib/api'
+import { DEFAULT_DECK, deckScale, type Card, type DeckId } from '@/lib/decks'
 import { KIND_LABEL, type StoryKind } from '@/types'
 
-const KIND_COLOR: Record<StoryKind, string> = {
-  frontend: 'var(--color-sky)',
-  backend: 'var(--color-mint)',
-  both: 'var(--color-grape)',
-}
-
-interface Draft extends DraftStory {
-  key: string
+interface Draft extends QueueItem {
+  link: string | null
 }
 
 export default function SprintSetup() {
@@ -19,6 +16,9 @@ export default function SprintSetup() {
   const [sprintName, setSprintName] = useState('')
   const [hostName, setHostName] = useState('')
   const [stories, setStories] = useState<Draft[]>([])
+
+  const [deckId, setDeckId] = useState<DeckId>(DEFAULT_DECK)
+  const [scale, setScale] = useState<Card[]>(() => deckScale(DEFAULT_DECK))
 
   const [title, setTitle] = useState('')
   const [link, setLink] = useState('')
@@ -34,11 +34,39 @@ export default function SprintSetup() {
     }
     setStories((prev) => [
       ...prev,
-      { key: crypto.randomUUID(), title: title.trim(), link: link.trim() || undefined, kind },
+      {
+        id: crypto.randomUUID(),
+        title: title.trim(),
+        link: link.trim() || null,
+        kind,
+      },
     ])
     setTitle('')
     setLink('')
     setError('')
+  }
+
+  const editStory = (id: string, edit: StoryEdit) => {
+    setStories((prev) =>
+      prev.map((s) =>
+        s.id === id ? { ...s, title: edit.title, link: edit.link || null, kind: edit.kind } : s,
+      ),
+    )
+  }
+
+  const deleteStory = (id: string) => {
+    setStories((prev) => prev.filter((s) => s.id !== id))
+  }
+
+  const moveStory = (id: string, delta: -1 | 1) => {
+    setStories((prev) => {
+      const from = prev.findIndex((s) => s.id === id)
+      const to = from + delta
+      if (from === -1 || to < 0 || to >= prev.length) return prev
+      const next = [...prev]
+      ;[next[from], next[to]] = [next[to], next[from]]
+      return next
+    })
   }
 
   const submit = async (e: React.FormEvent) => {
@@ -50,7 +78,13 @@ export default function SprintSetup() {
     setCreating(true)
     setError('')
     try {
-      const roomId = await createRoom(sprintName.trim(), hostName.trim(), stories)
+      const roomId = await createRoom(
+        sprintName.trim(),
+        hostName.trim(),
+        stories.map((s) => ({ title: s.title, link: s.link ?? undefined, kind: s.kind })),
+        deckId,
+        scale,
+      )
       navigate(`/sala/${roomId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não deu para criar a sala')
@@ -71,7 +105,8 @@ export default function SprintSetup() {
           Montar a <span className="text-gradient">sprint</span>
         </h1>
         <p className="mt-2 text-ink-muted">
-          Liste o que vai ser pontuado. Dá para acrescentar mais histórias durante a sessão.
+          Liste o que vai ser pontuado. Dá para editar, reordenar e acrescentar histórias
+          também durante a sessão.
         </p>
       </header>
 
@@ -94,6 +129,27 @@ export default function SprintSetup() {
               maxLength={40}
             />
           </Field>
+        </div>
+
+        {/* Baralho */}
+        <div className="card-surface space-y-4 p-6">
+          <div>
+            <h2 className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
+              Estilo de pontuação
+            </h2>
+            <p className="mt-1 text-xs text-ink-subtle">
+              Define as cartas que o time vai ter na mão. Não dá para trocar depois que a
+              sessão começa.
+            </p>
+          </div>
+          <DeckPicker
+            deckId={deckId}
+            scale={scale}
+            onChange={(id, next) => {
+              setDeckId(id)
+              setScale(next)
+            }}
+          />
         </div>
 
         {/* Adicionar história */}
@@ -133,51 +189,27 @@ export default function SprintSetup() {
 
         {/* Fila */}
         <div className="space-y-3">
-          <h2 className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
-            Na fila
-            <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-brand-400">
-              {stories.length}
-            </span>
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
+              Na fila
+              <span className="rounded-full bg-brand-500/15 px-2 py-0.5 text-brand-400">
+                {stories.length}
+              </span>
+            </h2>
+            {stories.length > 1 && (
+              <span className="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">
+                Use ▲▼ para reordenar
+              </span>
+            )}
+          </div>
 
-          {stories.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-hairline py-10 text-center text-sm text-ink-subtle">
-              Nada aqui ainda. Adicione a primeira história acima.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {stories.map((story, index) => (
-                <li
-                  key={story.key}
-                  className={cx(
-                    'card-surface animate-pop-in flex items-center gap-4 p-4',
-                    'transition-transform hover:-translate-y-0.5',
-                  )}
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-sunken)] font-mono text-xs font-black text-ink-muted">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-ink">{story.title}</p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <Badge color={KIND_COLOR[story.kind]}>{KIND_LABEL[story.kind]}</Badge>
-                      {story.link && (
-                        <span className="truncate text-xs text-ink-subtle">{story.link}</span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setStories((prev) => prev.filter((s) => s.key !== story.key))}
-                    aria-label={`Remover ${story.title}`}
-                    className="shrink-0 cursor-pointer rounded-xl px-3 py-2 text-ink-subtle transition-colors hover:bg-coral/10 hover:text-coral"
-                  >
-                    ✕
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <StoryQueue
+            items={stories}
+            onEdit={editStory}
+            onDelete={deleteStory}
+            onMove={moveStory}
+            emptyLabel="Nada aqui ainda. Adicione a primeira história acima."
+          />
         </div>
 
         <ErrorNote>{error}</ErrorNote>
