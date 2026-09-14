@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Badge, Button, Input, cx } from './ui'
+import { Badge, Button, Input } from './ui'
+import { cx } from '@/lib/cx'
 import {
   SPRINT_PRESETS,
   addDays,

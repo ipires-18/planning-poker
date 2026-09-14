@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 /**
  * Comemoração de consenso.
@@ -41,26 +41,27 @@ export function ConsensusBurst({ value, voters, onDone }: Props) {
   // Time maior, festa maior — mas com teto, senão vira ruído na tela.
   const particleCount = Math.min(42, 14 + voters * 4)
 
-  const particles = useMemo(
-    () =>
-      Array.from({ length: particleCount }, (_, i) => {
-        const angle = (i / particleCount) * 360 + Math.random() * 12
-        const distance = 140 + Math.random() * 220
-        return {
-          id: i,
-          glyph: SPARKS[i % SPARKS.length],
-          color: COLORS[i % COLORS.length],
-          x: Math.cos((angle * Math.PI) / 180) * distance,
-          y: Math.sin((angle * Math.PI) / 180) * distance,
-          size: 12 + Math.random() * 18,
-          delay: Math.random() * 0.18,
-          spin: (Math.random() - 0.5) * 540,
-        }
-      }),
-    [particleCount],
+  // useState com inicializador preguiçoso, e não useMemo: o React pode
+  // descartar um memo e recalcular, e aí as partículas saltariam de lugar no
+  // meio do voo. O initializer do useState roda uma vez e pronto.
+  const [particles] = useState(() =>
+    Array.from({ length: particleCount }, (_, i) => {
+      const angle = (i / particleCount) * 360 + Math.random() * 12
+      const distance = 140 + Math.random() * 220
+      return {
+        id: i,
+        glyph: SPARKS[i % SPARKS.length],
+        color: COLORS[i % COLORS.length],
+        x: Math.cos((angle * Math.PI) / 180) * distance,
+        y: Math.sin((angle * Math.PI) / 180) * distance,
+        size: 12 + Math.random() * 18,
+        delay: Math.random() * 0.18,
+        spin: (Math.random() - 0.5) * 540,
+      }
+    }),
   )
 
-  const cheer = useMemo(() => CHEERS[Math.floor(Math.random() * CHEERS.length)], [])
+  const [cheer] = useState(() => CHEERS[Math.floor(Math.random() * CHEERS.length)])
 
   useEffect(() => {
     const id = window.setTimeout(() => {

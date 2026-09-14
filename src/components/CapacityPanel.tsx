@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import { Avatar, Button, Input, cx } from './ui'
+import { Avatar, Button, Input } from './ui'
+import { cx } from '@/lib/cx'
 import { SprintWindowPicker } from './SprintWindowPicker'
-import { suggestCapacity, type TeamCapacity } from '@/lib/derive'
-import type { Holiday } from '@/lib/holidays'
-import { ROLE_ACCENT, ROLE_SHORT, type CapacityEntry } from '@/types'
+import { useCapacityDraft, type WindowDraft } from '@/hooks/useCapacityDraft'
+import type { TeamCapacity } from '@/lib/derive'
+import { ROLE_ACCENT, ROLE_SHORT, type CapacityEntry, type Player } from '@/types'
 
 interface Props {
   capacity: TeamCapacity
-  sprint: { start: string; days: number; holidays: Holiday[] }
+  sprint: WindowDraft
   qaVotes: boolean
   qaPresent: boolean
   onToggleQaVoting: (enabled: boolean) => void
-  onSaveWindow: (next: { start: string; days: number; holidays: Holiday[] }) => Promise<void>
+  onSaveWindow: (next: WindowDraft) => Promise<void>
   onSaveCapacity: (entries: CapacityEntry[]) => Promise<void>
 }
 
@@ -24,55 +25,15 @@ export function CapacityPanel({
   onSaveWindow,
   onSaveCapacity,
 }: Props) {
-  const [draft, setDraft] = useState(sprint)
-  const [rows, setRows] = useState<Record<string, { capacity: number; daysOff: number }>>(
-    () =>
-      Object.fromEntries(
-        capacity.rows.map((r) => [
-          r.player.id,
-          { capacity: r.capacity, daysOff: r.player.days_off },
-        ]),
-      ),
-  )
-  const [rate, setRate] = useState('1')
+  const draft = useCapacityDraft(capacity, sprint)
   const [saving, setSaving] = useState(false)
-
-  const windowChanged =
-    draft.start !== sprint.start ||
-    draft.days !== sprint.days ||
-    JSON.stringify(draft.holidays) !== JSON.stringify(sprint.holidays)
-
-  /** Dias úteis menos a ausência digitada agora, não a que está salva. */
-  const availableFor = (playerId: string) =>
-    Math.max(0, capacity.window.workingDays - (rows[playerId]?.daysOff ?? 0))
-
-  const applyRate = () => {
-    const perDay = parseFloat(rate.replace(',', '.'))
-    if (Number.isNaN(perDay) || perDay < 0) return
-    setRows((prev) =>
-      Object.fromEntries(
-        Object.entries(prev).map(([id, row]) => [
-          id,
-          { ...row, capacity: suggestCapacity(availableFor(id), perDay) },
-        ]),
-      ),
-    )
-  }
-
-  const total = Object.values(rows).reduce((sum, r) => sum + r.capacity, 0)
 
   const save = async () => {
     if (saving) return
     setSaving(true)
     try {
-      if (windowChanged) await onSaveWindow(draft)
-      await onSaveCapacity(
-        capacity.rows.map((r) => ({
-          player_id: r.player.id,
-          capacity_points: rows[r.player.id]?.capacity ?? 0,
-          days_off: rows[r.player.id]?.daysOff ?? 0,
-        })),
-      )
+      if (draft.windowChanged) await onSaveWindow(draft.window)
+      await onSaveCapacity(draft.toEntries())
     } finally {
       setSaving(false)
     }
@@ -80,77 +41,30 @@ export function CapacityPanel({
 
   return (
     <div className="space-y-6">
-      {/* Quem vota. A QA participa da cerimônia de qualquer jeito; o que muda
-          aqui é se ela recebe baralho. Pontuação ela não recebe em nenhum caso. */}
-      <section>
-        <h3 className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
-          Quem vota
-        </h3>
-        <label
-          className={cx(
-            'flex cursor-pointer items-start gap-3 rounded-2xl p-4 transition-colors',
-            qaVotes ? 'bg-brand-500/10' : 'bg-[var(--surface-sunken)]',
-          )}
-        >
-          <input
-            type="checkbox"
-            checked={qaVotes}
-            onChange={(e) => onToggleQaVoting(e.target.checked)}
-            className="mt-0.5 h-4 w-4 cursor-pointer accent-brand-500"
-          />
-          <span className="min-w-0">
-            <span className="block text-sm font-bold text-ink">A QA vota nesta sessão</span>
-            <span className="mt-1 block text-xs leading-snug text-ink-subtle">
-              Desligado, a QA acompanha as histórias e levanta pontos sem carta na mão.
-              Em qualquer um dos casos ela não recebe pontuação — quem carrega story
-              point é Tech Lead, Front e Back.
-              {!qaPresent && ' Nenhuma QA sentou à mesa ainda.'}
-            </span>
-          </span>
-        </label>
-      </section>
+      <Section title="Quem vota">
+        <QaVotingToggle enabled={qaVotes} qaPresent={qaPresent} onChange={onToggleQaVoting} />
+      </Section>
 
-      <section className="border-t border-hairline pt-6">
-        <h3 className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
-          Janela da sprint
-        </h3>
+      <Section title="Janela da sprint" divided>
         <SprintWindowPicker
-          start={draft.start}
-          days={draft.days}
-          holidays={draft.holidays}
-          onChange={setDraft}
+          start={draft.window.start}
+          days={draft.window.days}
+          holidays={draft.window.holidays}
+          onChange={draft.setWindow}
         />
-      </section>
+      </Section>
 
-      <section className="border-t border-hairline pt-6">
+      <Section title="Quanto cada um assume" divided>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h3 className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
-              Quanto cada um assume
-            </h3>
-            <p className="mt-1 text-xs text-ink-subtle">
-              Em pontos, só para quem é dono de entrega. Quem faltar dias tem menos
-              dias disponíveis.
-            </p>
-          </div>
-
-          <div className="flex items-end gap-2">
-            <label className="block">
-              <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-ink-subtle">
-                Pts / dia
-              </span>
-              <Input
-                value={rate}
-                onChange={(e) => setRate(e.target.value)}
-                inputMode="decimal"
-                aria-label="Pontos por dia"
-                className="w-16 py-1.5 text-center text-sm font-black"
-              />
-            </label>
-            <Button size="sm" variant="secondary" onClick={applyRate}>
-              Sugerir
-            </Button>
-          </div>
+          <p className="max-w-xs text-xs text-ink-subtle">
+            Em pontos, só para quem é dono de entrega. Quem faltar dias tem menos dias
+            disponíveis.
+          </p>
+          <RateSuggester
+            rate={draft.rate}
+            onRateChange={draft.setRate}
+            onApply={draft.applyRate}
+          />
         </div>
 
         {capacity.rows.length === 0 ? (
@@ -159,76 +73,18 @@ export function CapacityPanel({
           </p>
         ) : (
           <ul className="space-y-2">
-            {capacity.rows.map((row) => {
-              const accent = ROLE_ACCENT[row.player.role]
-              const entry = rows[row.player.id] ?? { capacity: 0, daysOff: 0 }
-              const available = availableFor(row.player.id)
-
-              return (
-                <li
-                  key={row.player.id}
-                  className="flex items-center gap-3 rounded-2xl bg-[var(--surface-sunken)] p-3"
-                >
-                  <Avatar name={row.player.name} color={accent} size={34} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-ink">{row.player.name}</p>
-                    <span
-                      className="whitespace-nowrap text-[10px] font-black uppercase tracking-wider"
-                      style={{ color: accent }}
-                    >
-                      {ROLE_SHORT[row.player.role]} · {available} dia
-                      {available !== 1 && 's'}
-                    </span>
-                  </div>
-
-                  <label className="flex shrink-0 items-center gap-1.5">
-                    <span className="text-[10px] font-black uppercase text-ink-subtle">
-                      Falta
-                    </span>
-                    <Input
-                      type="number"
-                      min="0"
-                      max={capacity.window.workingDays}
-                      value={entry.daysOff}
-                      aria-label={`Dias de ausência de ${row.player.name}`}
-                      onChange={(e) =>
-                        setRows((prev) => ({
-                          ...prev,
-                          [row.player.id]: {
-                            ...entry,
-                            daysOff: Math.max(0, parseInt(e.target.value, 10) || 0),
-                          },
-                        }))
-                      }
-                      className="w-16 py-1.5 text-center font-black"
-                    />
-                  </label>
-
-                  <label className="flex shrink-0 items-center gap-1.5">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      value={entry.capacity}
-                      aria-label={`Capacidade de ${row.player.name}`}
-                      onChange={(e) =>
-                        setRows((prev) => ({
-                          ...prev,
-                          [row.player.id]: {
-                            ...entry,
-                            capacity: Math.max(0, parseFloat(e.target.value) || 0),
-                          },
-                        }))
-                      }
-                      className="w-20 py-1.5 text-right font-black"
-                    />
-                    <span className="text-[10px] font-black uppercase text-ink-subtle">
-                      pts
-                    </span>
-                  </label>
-                </li>
-              )
-            })}
+            {capacity.rows.map(({ player }) => (
+              <CapacityRow
+                key={player.id}
+                player={player}
+                availableDays={draft.availableDays(player.id)}
+                maxDaysOff={capacity.window.workingDays}
+                capacityPoints={draft.rowFor(player.id).capacity}
+                daysOff={draft.rowFor(player.id).daysOff}
+                onCapacityChange={(points) => draft.setCapacityPoints(player.id, points)}
+                onDaysOffChange={(days) => draft.setDaysOff(player.id, days)}
+              />
+            ))}
           </ul>
         )}
 
@@ -236,14 +92,168 @@ export function CapacityPanel({
           <span className="text-[10px] font-black uppercase tracking-[0.14em] text-ink-subtle">
             Capacidade do time
           </span>
-          <span className="text-2xl font-black text-gradient">{total} pts</span>
+          <span className="text-2xl font-black text-gradient">{draft.total} pts</span>
         </div>
-      </section>
+      </Section>
 
       <Button variant="joy" size="lg" className="w-full" onClick={save} disabled={saving}>
         {saving ? 'Salvando...' : 'Salvar capacidade'}
       </Button>
     </div>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+
+function Section({
+  title,
+  divided,
+  children,
+}: {
+  title: string
+  divided?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <section className={divided ? 'border-t border-hairline pt-6' : undefined}>
+      <h3 className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
+        {title}
+      </h3>
+      {children}
+    </section>
+  )
+}
+
+/**
+ * A QA participa da cerimônia de qualquer jeito; o que muda aqui é se ela
+ * recebe baralho. Pontuação ela não recebe em nenhum caso.
+ */
+function QaVotingToggle({
+  enabled,
+  qaPresent,
+  onChange,
+}: {
+  enabled: boolean
+  qaPresent: boolean
+  onChange: (enabled: boolean) => void
+}) {
+  return (
+    <label
+      className={cx(
+        'flex cursor-pointer items-start gap-3 rounded-2xl p-4 transition-colors',
+        enabled ? 'bg-brand-500/10' : 'bg-[var(--surface-sunken)]',
+      )}
+    >
+      <input
+        type="checkbox"
+        checked={enabled}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 h-4 w-4 cursor-pointer accent-brand-500"
+      />
+      <span className="min-w-0">
+        <span className="block text-sm font-bold text-ink">A QA vota nesta sessão</span>
+        <span className="mt-1 block text-xs leading-snug text-ink-subtle">
+          Desligado, a QA acompanha as histórias e levanta pontos sem carta na mão. Em
+          qualquer um dos casos ela não recebe pontuação — quem carrega story point é Tech
+          Lead, Front e Back.
+          {!qaPresent && ' Nenhuma QA sentou à mesa ainda.'}
+        </span>
+      </span>
+    </label>
+  )
+}
+
+/** Preenche a capacidade de todo mundo a partir de um ritmo em pontos por dia. */
+function RateSuggester({
+  rate,
+  onRateChange,
+  onApply,
+}: {
+  rate: string
+  onRateChange: (rate: string) => void
+  onApply: () => void
+}) {
+  return (
+    <div className="flex items-end gap-2">
+      <label className="block">
+        <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-ink-subtle">
+          Pts / dia
+        </span>
+        <Input
+          value={rate}
+          onChange={(e) => onRateChange(e.target.value)}
+          inputMode="decimal"
+          aria-label="Pontos por dia"
+          className="w-16 py-1.5 text-center text-sm font-black"
+        />
+      </label>
+      <Button size="sm" variant="secondary" onClick={onApply}>
+        Sugerir
+      </Button>
+    </div>
+  )
+}
+
+function CapacityRow({
+  player,
+  availableDays,
+  maxDaysOff,
+  capacityPoints,
+  daysOff,
+  onCapacityChange,
+  onDaysOffChange,
+}: {
+  player: Player
+  availableDays: number
+  maxDaysOff: number
+  capacityPoints: number
+  daysOff: number
+  onCapacityChange: (points: number) => void
+  onDaysOffChange: (days: number) => void
+}) {
+  const accent = ROLE_ACCENT[player.role]
+  const dayLabel = `${availableDays} dia${availableDays === 1 ? '' : 's'}`
+
+  return (
+    <li className="flex items-center gap-3 rounded-2xl bg-[var(--surface-sunken)] p-3">
+      <Avatar name={player.name} color={accent} size={34} />
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-bold text-ink">{player.name}</p>
+        <span
+          className="whitespace-nowrap text-[10px] font-black uppercase tracking-wider"
+          style={{ color: accent }}
+        >
+          {ROLE_SHORT[player.role]} · {dayLabel}
+        </span>
+      </div>
+
+      <label className="flex shrink-0 items-center gap-1.5">
+        <span className="text-[10px] font-black uppercase text-ink-subtle">Falta</span>
+        <Input
+          type="number"
+          min="0"
+          max={maxDaysOff}
+          value={daysOff}
+          aria-label={`Dias de ausência de ${player.name}`}
+          onChange={(e) => onDaysOffChange(parseInt(e.target.value, 10) || 0)}
+          className="w-16 py-1.5 text-center font-black"
+        />
+      </label>
+
+      <label className="flex shrink-0 items-center gap-1.5">
+        <Input
+          type="number"
+          min="0"
+          step="0.5"
+          value={capacityPoints}
+          aria-label={`Capacidade de ${player.name}`}
+          onChange={(e) => onCapacityChange(parseFloat(e.target.value) || 0)}
+          className="w-20 py-1.5 text-right font-black"
+        />
+        <span className="text-[10px] font-black uppercase text-ink-subtle">pts</span>
+      </label>
+    </li>
   )
 }
 

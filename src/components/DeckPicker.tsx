@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Input, cx } from './ui'
+import { Input } from './ui'
+import { cx } from '@/lib/cx'
 import {
   DECKS,
   DECK_ORDER,

@@ -1,4 +1,5 @@
-import { Avatar, cx } from './ui'
+import { Avatar } from './ui'
+import { cx } from '@/lib/cx'
 import { ROLE_ACCENT, ROLE_SHORT, type Player } from '@/types'
 
 interface Props {

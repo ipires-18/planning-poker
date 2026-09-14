@@ -1,4 +1,4 @@
-import { cx } from './ui'
+import { cx } from '@/lib/cx'
 import { PENDING, type Card } from '@/lib/decks'
 
 interface Props {

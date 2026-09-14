@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Badge, Button, Input, Select, cx } from './ui'
+import { Badge, Button, Input, Select } from './ui'
+import { cx } from '@/lib/cx'
 import { KIND_COLOR, KIND_LABEL, type StoryKind } from '@/types'
 
 export interface QueueItem {
@@ -56,6 +57,7 @@ export function StoryQueue({ items, onEdit, onDelete, onMove, emptyLabel }: Prop
             <li key={story.id} className="card-surface p-4">
               <StoryEditor
                 initial={{ title: story.title, link: story.link ?? '', kind: story.kind }}
+                describedAs={`de "${story.title}"`}
                 onCancel={() => setEditing(null)}
                 onSave={async (edit) => {
                   await onEdit(story.id, edit)
@@ -183,11 +185,21 @@ export function StoryEditor({
   onSave,
   onCancel,
   saveLabel = 'Salvar',
+  hideCancel = false,
+  describedAs = 'da história',
 }: {
   initial: StoryEdit
   onSave: (edit: StoryEdit) => void | Promise<void>
   onCancel: () => void
   saveLabel?: string
+  /** Na tela de criação não há o que cancelar: o formulário é permanente. */
+  hideCancel?: boolean
+  /**
+   * Completa os rótulos dos campos. Com o formulário de adicionar e o de editar
+   * abertos na mesma página, "Título" sozinho apontaria para dois inputs — e
+   * nem o leitor de tela nem quem automatiza saberia qual é qual.
+   */
+  describedAs?: string
 }) {
   const [title, setTitle] = useState(initial.title)
   const [link, setLink] = useState(initial.link)
@@ -220,7 +232,7 @@ export function StoryEditor({
         placeholder="Título da história"
         maxLength={200}
         autoFocus
-        aria-label="Título"
+        aria-label={`Título ${describedAs}`}
       />
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <Input
@@ -228,12 +240,12 @@ export function StoryEditor({
           onChange={(e) => setLink(e.target.value)}
           placeholder="Link do ticket (opcional)"
           inputMode="url"
-          aria-label="Link"
+          aria-label={`Link ${describedAs}`}
         />
         <Select
           value={kind}
           onChange={(e) => setKind(e.target.value as StoryKind)}
-          aria-label="Tipo"
+          aria-label={`Tipo ${describedAs}`}
         >
           <option value="both">{KIND_LABEL.both}</option>
           <option value="frontend">{KIND_LABEL.frontend}</option>
@@ -241,12 +253,20 @@ export function StoryEditor({
         </Select>
       </div>
       <div className="flex gap-2">
-        <Button size="sm" variant="primary" onClick={save} disabled={!title.trim() || busy}>
+        <Button
+          size="sm"
+          variant={hideCancel ? 'secondary' : 'primary'}
+          onClick={save}
+          disabled={!title.trim() || busy}
+          className={hideCancel ? 'w-full' : undefined}
+        >
           {busy ? 'Salvando...' : saveLabel}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onCancel}>
-          Cancelar
-        </Button>
+        {!hideCancel && (
+          <Button size="sm" variant="ghost" onClick={onCancel}>
+            Cancelar
+          </Button>
+        )}
       </div>
     </div>
   )

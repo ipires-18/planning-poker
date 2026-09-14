@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, ErrorNote, Field, Input, Spinner, cx } from '@/components/ui'
+import { Button, ErrorNote, Field, Input, Spinner } from '@/components/ui'
+import { cx } from '@/lib/cx'
 import { joinRoom } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'

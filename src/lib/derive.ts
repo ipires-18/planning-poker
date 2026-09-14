@@ -65,14 +65,17 @@ export function summarize(state: RoomState): PlayerSummary[] {
 
 /** Tempo médio de discussão, em segundos, sobre as histórias já fechadas. */
 export function averageStorySeconds(stories: Story[]): number {
-  const timed = stories.filter((s) => s.started_at && s.ended_at)
-  if (timed.length === 0) return 0
-  const total = timed.reduce(
-    (sum, s) =>
-      sum + (new Date(s.ended_at!).getTime() - new Date(s.started_at!).getTime()),
-    0,
-  )
-  return Math.floor(total / timed.length / 1000)
+  // flatMap em vez de filter + `!`: o par de datas sai daqui já garantido.
+  const durations = stories.flatMap((story) => {
+    const { started_at, ended_at } = story
+    if (!started_at || !ended_at) return []
+    return [new Date(ended_at).getTime() - new Date(started_at).getTime()]
+  })
+
+  if (durations.length === 0) return 0
+
+  const total = durations.reduce((sum, ms) => sum + ms, 0)
+  return Math.floor(total / durations.length / 1000)
 }
 
 export function sprintIsComplete(state: RoomState): boolean {

@@ -44,6 +44,13 @@ export function formatShort(iso: string): string {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
+/** Segundos em mm:ss, para o cronômetro da história. */
+export function formatClock(seconds: number): string {
+  const minutes = Math.floor(seconds / 60)
+  const rest = Math.floor(seconds % 60)
+  return `${minutes}:${rest.toString().padStart(2, '0')}`
+}
+
 export function formatLong(iso: string): string {
   return fromISODate(iso).toLocaleDateString('pt-BR', {
     day: '2-digit',

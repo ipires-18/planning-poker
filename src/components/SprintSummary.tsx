@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Avatar, Button, Input, cx } from './ui'
-import { formatClock } from './StoryStage'
+import { useEffect, useState } from 'react'
+import { Avatar, Button, Input } from './ui'
+import { cx } from '@/lib/cx'
+import { formatClock } from '@/lib/holidays'
 import { ROLE_ACCENT, type VotingSide } from '@/types'
 import { summaryAsText, type PlayerSummary } from '@/lib/derive'
 
@@ -13,25 +14,28 @@ interface Props {
   onLeave: () => void
 }
 
+const CONFETTI_COLORS = [
+  'var(--color-brand-400)',
+  'var(--color-punch)',
+  'var(--color-zest)',
+  'var(--color-mint)',
+  'var(--color-sky)',
+]
+
 /** Chuva de confete em CSS puro. Roda uma vez, e some. */
 function Confetti() {
-  const pieces = useMemo(
-    () =>
-      Array.from({ length: 44 }, (_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 2.5,
-        duration: 2.6 + Math.random() * 2,
-        size: 6 + Math.random() * 8,
-        color: [
-          'var(--color-brand-400)',
-          'var(--color-punch)',
-          'var(--color-zest)',
-          'var(--color-mint)',
-          'var(--color-sky)',
-        ][i % 5],
-      })),
-    [],
+  // Inicializador do useState, e não useMemo: um memo pode ser descartado pelo
+  // React e recalculado, fazendo o confete inteiro pular de posição no meio da
+  // queda.
+  const [pieces] = useState(() =>
+    Array.from({ length: 44 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 2.5,
+      duration: 2.6 + Math.random() * 2,
+      size: 6 + Math.random() * 8,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    })),
   )
 
   return (
@@ -84,16 +88,10 @@ export function SprintSummary({
     }
   }
 
-  const commitEdit = async (
-    key: string,
-    storyId: string,
-    playerId: string,
-    side: VotingSide,
-  ) => {
+  const commitEdit = async (storyId: string, playerId: string, side: VotingSide) => {
     const value = parseFloat(draft)
     if (!Number.isNaN(value)) await onAdjust(storyId, playerId, side, value)
     setEditing(null)
-    void key
   }
 
   const grandTotal = summaries.reduce((sum, row) => sum + row.total, 0)
@@ -188,7 +186,7 @@ export function SprintSummary({
                                 value={draft}
                                 onChange={(e) => setDraft(e.target.value)}
                                 onBlur={() =>
-                                  commitEdit(key, story.storyId, row.player.id, story.side)
+                                  commitEdit(story.storyId, row.player.id, story.side)
                                 }
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') e.currentTarget.blur()

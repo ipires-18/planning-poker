@@ -74,11 +74,14 @@ export function useRoomState(roomId: string | undefined, userId: string | null):
   }, [refresh])
 
   useEffect(() => {
-    if (!roomId) {
-      setLoading(false)
-      return
-    }
-    void refresh()
+    // Sem sala não há o que buscar; `loading` já nasce false nesse caso, então
+    // não há setState a fazer aqui.
+    //
+    // O aviso de set-state-in-effect é falso positivo: a própria regra abre
+    // exceção para sincronizar com sistema externo, que é exatamente o que esta
+    // busca faz. O estado não tem como ser derivado na renderização.
+    // oxlint-disable-next-line react/set-state-in-effect
+    if (roomId) void refresh()
   }, [roomId, refresh])
 
   useEffect(() => {

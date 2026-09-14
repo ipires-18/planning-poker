@@ -19,7 +19,8 @@ const bad = (label, detail) => {
   console.log(`  ✗ ${label}${detail ? ` — ${detail}` : ''}`)
 }
 function check(label, condition, detail) {
-  condition ? ok(label) : bad(label, detail)
+  if (condition) ok(label)
+  else bad(label, detail)
 }
 
 async function newUser(label) {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Button, cx } from './ui'
+import { Button } from './ui'
+import { cx } from '@/lib/cx'
 import { CapacityMeter } from './CapacityPanel'
 import type { TeamCapacity } from '@/lib/derive'
 

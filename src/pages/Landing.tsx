@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Input, cx } from '@/components/ui'
+import { Button, Input } from '@/components/ui'
+import { cx } from '@/lib/cx'
 import { roomExists } from '@/lib/api'
 
 /** Cartas decorativas em leque atrás do título. */

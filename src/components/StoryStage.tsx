@@ -1,12 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Badge, Button, Select, cx } from './ui'
+import { Badge, Button, Select } from './ui'
+import { cx } from '@/lib/cx'
+import { formatClock } from '@/lib/holidays'
 import { KIND_LABEL, type Story, type StoryKind, type VotingSide } from '@/types'
-
-export function formatClock(seconds: number) {
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
 
 const SIDE_COLOR: Record<VotingSide, string> = {
   frontend: 'var(--color-sky)',

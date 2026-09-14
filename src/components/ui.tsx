@@ -1,8 +1,5 @@
 import { forwardRef, useEffect, type ReactNode } from 'react'
-
-export function cx(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(' ')
-}
+import { cx } from '@/lib/cx'
 
 /* -------------------------------------------------------------------------- */
 /* Button                                                                      */
