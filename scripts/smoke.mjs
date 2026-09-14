@@ -559,6 +559,54 @@ const { error: longSprint } = await po.client.rpc('set_sprint_window', {
 })
 check('sprint absurdamente longa é recusada', Boolean(longSprint))
 
+/* ------------------------------------------------------- link da história --- */
+console.log('\nLink da história')
+
+const { error: hostileLink } = await po.client.rpc('create_room', {
+  p_session_name: 'Link hostil',
+  p_host_name: 'Iago (PO)',
+  p_stories: [{ title: 'X', link: 'javascript:alert(1)', kind: 'frontend' }],
+})
+check('link "javascript:" é recusado na criação', Boolean(hostileLink))
+
+const { data: roomL } = await po.client.rpc('create_room', {
+  p_session_name: 'Links',
+  p_host_name: 'Iago (PO)',
+  p_stories: [{ title: 'Com link bom', link: 'https://jira.local/PP-7', kind: 'frontend' }],
+})
+check('link https passa', Boolean(roomL))
+
+const { data: storyL } = await po.client.from('stories').select('*').eq('room_id', roomL).single()
+check('link gravado intacto', storyL.link === 'https://jira.local/PP-7')
+
+for (const [rotulo, link] of [
+  ['javascript:', 'javascript:alert(1)'],
+  ['data:', 'data:text/html,<script>alert(1)</script>'],
+  ['sem esquema', 'jira.local/PP-8'],
+  ['com espaço', 'https://jira.local/ PP-9'],
+]) {
+  const { error } = await po.client.rpc('add_story', {
+    p_room_id: roomL, p_title: 'Hostil', p_link: link, p_kind: 'frontend',
+  })
+  check(`add_story recusa link ${rotulo}`, Boolean(error))
+}
+
+const { error: editHostile } = await po.client.rpc('update_story', {
+  p_story_id: storyL.id, p_title: 'X', p_link: 'javascript:alert(1)', p_kind: 'frontend',
+})
+check('update_story recusa link hostil', Boolean(editHostile))
+
+const { error: emptyLink } = await po.client.rpc('update_story', {
+  p_story_id: storyL.id, p_title: 'Sem link agora', p_link: '  ', p_kind: 'frontend',
+})
+check('link em branco vira nulo, sem erro', !emptyLink, emptyLink?.message)
+
+const { error: directHostile } = await po.client
+  .from('stories')
+  .update({ link: 'javascript:alert(1)' })
+  .eq('id', storyL.id)
+check('nem escrita direta na tabela passa link hostil', Boolean(directHostile))
+
 /* ------------------------------------------------------------------- QA --- */
 console.log('\nQA na cerimônia')
 

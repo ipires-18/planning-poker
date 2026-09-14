@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Badge, Button, Select } from './ui'
 import { cx } from '@/lib/cx'
 import { formatClock } from '@/lib/holidays'
+import { safeUrl } from '@/lib/links'
 import { KIND_LABEL, type Story, type StoryKind, type VotingSide } from '@/types'
 
 const SIDE_COLOR: Record<VotingSide, string> = {
@@ -69,6 +70,7 @@ export function StoryStage({ story, side, isHost, onKindChange, onStartTimer }: 
     return () => window.clearInterval(id)
   }, [story.started_at, story.ended_at])
 
+  const link = safeUrl(story.link)
   const both = story.kind === 'both'
   const front = story.frontend_pending ? 'Ag.' : (story.frontend_points ?? '–')
   const back = story.backend_pending ? 'Ag.' : (story.backend_points ?? '–')
@@ -101,9 +103,9 @@ export function StoryStage({ story, side, isHost, onKindChange, onStartTimer }: 
               <Badge color="var(--color-grape)">{KIND_LABEL[story.kind]}</Badge>
             )}
 
-            {story.link && (
+            {link && (
               <a
-                href={story.link}
+                href={link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs font-bold text-ink-subtle underline-offset-4 transition-colors hover:text-brand-400 hover:underline"

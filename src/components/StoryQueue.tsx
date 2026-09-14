@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Badge, Button, Input, Select } from './ui'
 import { cx } from '@/lib/cx'
+import { prettyUrl, safeUrl } from '@/lib/links'
 import { KIND_COLOR, KIND_LABEL, type StoryKind } from '@/types'
 
 export interface QueueItem {
@@ -120,14 +121,14 @@ export function StoryQueue({ items, onEdit, onDelete, onMove, emptyLabel }: Prop
                 <Badge color={KIND_COLOR[story.kind]}>{KIND_LABEL[story.kind]}</Badge>
                 {story.current && <Badge color="var(--color-brand-400)">Em votação</Badge>}
                 {story.locked && <Badge color="var(--color-ink-subtle)">Pontuada</Badge>}
-                {story.link && (
+                {safeUrl(story.link) && (
                   <a
-                    href={story.link}
+                    href={safeUrl(story.link) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="truncate text-xs text-ink-subtle underline-offset-2 hover:text-brand-400 hover:underline"
                   >
-                    {story.link.replace(/^https?:\/\//, '')}
+                    {prettyUrl(story.link)}
                   </a>
                 )}
               </div>

@@ -1,4 +1,5 @@
 import { windowStats, type WindowStats } from './holidays'
+import { safeUrl } from './links'
 import { roleScores, roleVotes } from '@/types'
 import type { Player, RoomState, Story, StoryParticipant, VotingSide } from '@/types'
 
@@ -48,7 +49,7 @@ export function summarize(state: RoomState): PlayerSummary[] {
         return {
           storyId: story.id,
           title: story.title,
-          link: story.link,
+          link: safeUrl(story.link),
           side: participation.side,
           points: Number(participation.points),
           pending: participation.pending,

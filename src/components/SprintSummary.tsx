@@ -3,6 +3,7 @@ import { Avatar, Button, Input } from './ui'
 import { cx } from '@/lib/cx'
 import { formatClock } from '@/lib/holidays'
 import { ROLE_ACCENT, type VotingSide } from '@/types'
+import { safeUrl } from '@/lib/links'
 import { summaryAsText, type PlayerSummary } from '@/lib/derive'
 
 interface Props {
@@ -163,9 +164,9 @@ export function SprintSummary({
                             key={key}
                             className="flex items-center justify-between gap-3 text-sm"
                           >
-                            {story.link ? (
+                            {safeUrl(story.link) ? (
                               <a
-                                href={story.link}
+                                href={safeUrl(story.link) ?? undefined}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="truncate font-bold text-ink-muted transition-colors hover:text-brand-400 hover:underline"

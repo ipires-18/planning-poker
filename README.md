@@ -88,6 +88,19 @@ mexer nos feriados.
 
 ## Como a segurança funciona
 
+Resumo do que protege o quê:
+
+| Superfície | Defesa |
+|---|---|
+| Voto antes da revelação | RLS: a linha não é devolvida a mais ninguém |
+| Escrita em sala alheia | `is_room_host` / `is_room_member` dentro de cada função |
+| Papel que não pontua | `role_scores()` barra a alocação no `commit_story` |
+| Link de história | Só `http`/`https`, validado no banco e no cliente |
+| Chave no código | Nenhuma: tudo vem de `.env.local`, que está no `.gitignore` |
+| Função com privilégio | As 29 `security definer` fixam `search_path` |
+| Clickjacking / MIME / CSP | Cabeçalhos no `vercel.json` |
+
+
 O ponto central do projeto: **o voto é escondido pelo Postgres, não pelo React.**
 
 ```sql

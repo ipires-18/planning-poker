@@ -1,6 +1,7 @@
 import { Avatar } from './ui'
 import { cx } from '@/lib/cx'
 import { ROLE_ACCENT, ROLE_LABEL, ROLE_SHORT, type Player } from '@/types'
+import { safeUrl } from '@/lib/links'
 import type { CapacityRow, PlayerSummary, TeamCapacity } from '@/lib/derive'
 
 interface Props {
@@ -145,9 +146,9 @@ function ScorerRow({
               key={`${story.storyId}-${story.side}`}
               className="flex items-center justify-between gap-2 text-[11px] text-ink-subtle"
             >
-              {story.link ? (
+              {safeUrl(story.link) ? (
                 <a
-                  href={story.link}
+                  href={safeUrl(story.link) ?? undefined}
                   target="_blank"
                   rel="noopener noreferrer"
                   title={story.title}
