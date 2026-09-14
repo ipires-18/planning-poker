@@ -158,6 +158,7 @@ Resumo do que protege o quê:
 | Link de história | Só `http`/`https`, validado no banco e no cliente |
 | Chave no código | Nenhuma: tudo vem de `.env.local`, que está no `.gitignore` |
 | Função com privilégio | As 29 `security definer` fixam `search_path` |
+| Privilégio de tabela | Só `select`, só para `authenticated`, escrito nas migrações |
 | Clickjacking / MIME / CSP | Cabeçalhos no `vercel.json` |
 | Enchente de salas | Teto de 5 sessões abertas por pessoa |
 | Escrita fora das regras | Nenhuma policy de escrita: tudo passa pelas funções |
@@ -198,8 +199,14 @@ pnpm dev
 
 ### Configurando o Supabase
 
-1. Crie um projeto em [supabase.com](https://supabase.com).
-2. Em **Authentication → Providers**, ative **Anonymous sign-ins**.
+1. Crie um projeto em [supabase.com](https://supabase.com). Em **Security**,
+   pode deixar *"Automatically expose new tables"* desmarcada: as migrações
+   concedem o privilégio de leitura explicitamente, então o schema não depende
+   de ajuste no painel. *"Enable automatic RLS"* vale marcar — redundante hoje,
+   porque as migrações ligam RLS nas cinco tabelas, mas protege qualquer tabela
+   criada à mão depois.
+2. Em **Authentication → Providers**, ative **Anonymous sign-ins**. Sem isso
+   ninguém entra em sala nenhuma: a identidade de cada pessoa é um JWT anônimo.
 3. No **SQL Editor**, rode na ordem:
    - todos os arquivos de `packages/db/supabase/migrations/`, em ordem
 4. Em **Project Settings → API**, copie `URL` e `anon public key` para o
