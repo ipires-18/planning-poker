@@ -136,6 +136,22 @@ Opcional — limpeza automática das salas expiradas, via `pg_cron`:
 select cron.schedule('purge-rooms', '0 4 * * *', 'select purge_expired_rooms()');
 ```
 
+## Credenciais
+
+Nada de chave escrita no código. O app lê `VITE_SUPABASE_URL` e
+`VITE_SUPABASE_ANON_KEY` do `.env.local`; os scripts leem as mesmas variáveis do
+ambiente e, se não achar, do `.env.local` ou `.env` — todos no `.gitignore`.
+
+A anon key é pública por natureza: ela vai no bundle que o navegador baixa. Quem
+protege os dados é o RLS, não o sigilo da chave. Mesmo assim ela não fica no
+código-fonte — chave em arquivo versionado é o hábito que um dia vaza a errada.
+A `service_role`, essa sim, não aparece em lugar nenhum do projeto: ela ignora o
+RLS inteiro.
+
+Os scripts que criam dados de mentira (`smoke`, `demo:consenso`) se recusam a
+rodar se o `.env.local` estiver apontando para fora da máquina. Para forçar,
+`ALLOW_REMOTE=1`.
+
 ## Scripts
 
 | Comando | O que faz |

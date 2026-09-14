@@ -6,13 +6,15 @@
  *   npm run seed ABC123     → povoa uma sala que já existe
  */
 import { createClient } from '@supabase/supabase-js'
+import {
+  APP_URL,
+  SUPABASE_ANON_KEY as KEY,
+  SUPABASE_URL as URL,
+  abort,
+  isLocal,
+} from './env.mjs'
 
-const URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321'
-const KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
-
-const APP_URL = process.env.APP_URL ?? 'http://localhost:5173'
+if (!isLocal) console.log(`\n⚠  Apontando para ${URL}`)
 
 const CAST = [
   { name: 'Ana', role: 'frontend', pick: 0.45 },
@@ -32,14 +34,6 @@ const DEMO_STORIES = [
   { title: 'Cache do endpoint de busca', link: null, kind: 'backend' },
   { title: 'Ajuste de contraste no tema escuro', link: null, kind: 'frontend' },
 ]
-
-/** Encerra com uma mensagem legível em vez de despejar stack trace. */
-function abort(message, hint) {
-  console.error(`\n✗ ${message}`)
-  if (hint) console.error(`  ${hint}`)
-  console.error('')
-  process.exit(1)
-}
 
 function newClient() {
   return createClient(URL, KEY, {

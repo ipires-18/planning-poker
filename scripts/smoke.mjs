@@ -7,11 +7,10 @@
  *   npx supabase start && node scripts/smoke.mjs
  */
 import { createClient } from '@supabase/supabase-js'
+import { SUPABASE_ANON_KEY as KEY, SUPABASE_URL as URL, requireLocal } from './env.mjs'
 
-const URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321'
-const KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
+// Este script enche o banco de salas e jogadores de mentira.
+requireLocal('O teste de fumaça')
 
 let failures = 0
 const ok = (label) => console.log(`  ✓ ${label}`)

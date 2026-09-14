@@ -23,8 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
-.env.local
+# Credenciais — nunca versionar
 .env
+.env.*
+!.env.example
 
 # Supabase local
 supabase/.branches
