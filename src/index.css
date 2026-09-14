@@ -231,3 +231,111 @@ html.dark {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ------------------------------------------------------------------
+   Consenso — a explosão que celebra o time inteiro cravando a mesma carta.
+   Sai do centro para fora, ao contrário do confete de fim de sprint, que cai.
+------------------------------------------------------------------ */
+
+@keyframes consensus-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  18% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@keyframes consensus-rays {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(0deg);
+  }
+  22% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25) rotate(36deg);
+  }
+}
+
+@keyframes consensus-spark {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.3) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(calc(var(--dx) * 0.12), calc(var(--dy) * 0.12)) scale(1.15)
+      rotate(calc(var(--turn) * 0.12));
+  }
+  100% {
+    opacity: 0;
+    /* A queda no fim tira o ar de "estrelinha de PowerPoint". */
+    transform: translate(var(--dx), calc(var(--dy) + 70px)) scale(0.5)
+      rotate(var(--turn));
+  }
+}
+
+@keyframes consensus-core {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  45% {
+    transform: scale(1);
+  }
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+.consensus-flash {
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--color-brand-400) 55%, transparent) 0%,
+    color-mix(in oklab, var(--color-punch) 25%, transparent) 45%,
+    transparent 70%
+  );
+  animation: consensus-flash 1.1s var(--ease-out-soft) both;
+}
+
+.consensus-rays {
+  animation: consensus-rays 1.6s var(--ease-out-soft) both;
+}
+
+.consensus-spark {
+  animation: consensus-spark 2.2s var(--ease-out-soft) both;
+}
+
+.consensus-core {
+  animation: consensus-core 2.6s var(--ease-spring) both;
+}
+
+/* Quem pediu menos movimento vê o número e a frase, sem a explosão. */
+@media (prefers-reduced-motion: reduce) {
+  .consensus-flash,
+  .consensus-rays,
+  .consensus-spark {
+    display: none;
+  }
+  .consensus-core {
+    animation: none;
+    opacity: 1;
+  }
+}

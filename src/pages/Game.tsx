@@ -376,6 +376,7 @@ export default function Game() {
                       }))
                       .filter((v) => v.player)}
                     scorers={scorers}
+                    voterCount={voters.length}
                     isHost={isHost}
                     onConfirm={confirmStory}
                     onReset={() => void run(() => api.resetRound(roomId))}

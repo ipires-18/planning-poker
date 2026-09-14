@@ -44,6 +44,8 @@ não pela interface.
   nacionais calculados automaticamente, ausências por pessoa e quantos pontos
   cada um assume. O cabeçalho mostra o comprometido contra a capacidade, e muda
   de cor quando o time passa do que cabe.
+- **Comemoração de consenso** quando o time inteiro crava a mesma carta — uma
+  explosão que sai do centro da mesa, diferente do confete do fim da sprint.
 - **Tema claro e escuro.**
 
 ## Três decisões que valem explicar
@@ -139,6 +141,7 @@ select cron.schedule('purge-rooms', '0 4 * * *', 'select purge_expired_rooms()')
 | `npm run smoke` | Roda as verificações de ponta a ponta |
 | `npm run seed` | Cria uma sala de demonstração já povoada |
 | `npm run seed ABC123` | Povoa uma sala existente com 4 participantes |
+| `npm run demo:consenso 13` | Deixa uma sala pronta para ver a comemoração |
 
 ## Estrutura
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Avatar, Badge, Button, Input, Select, cx } from './ui'
+import { Avatar, Button, Input, Select, cx } from './ui'
+import { ConsensusBurst } from './ConsensusBurst'
 import { PENDING, cardByLabel, formatPoints, scoringCards, type Card } from '@/lib/decks'
 import { ROLE_ACCENT, ROLE_SHORT, type Allocation, type Player } from '@/types'
 
@@ -9,12 +10,22 @@ interface Props {
   votes: { player: Player; label: string }[]
   /** Quem pode receber pontos — o PO observa, não pontua. */
   scorers: Player[]
+  /** Quantas pessoas tinham baralho nesta rodada. */
+  voterCount: number
   isHost: boolean
   onConfirm: (points: number | null, allocations: Allocation[]) => Promise<void>
   onReset: () => void
 }
 
-export function ResultsPanel({ scale, votes, scorers, isHost, onConfirm, onReset }: Props) {
+export function ResultsPanel({
+  scale,
+  votes,
+  scorers,
+  voterCount,
+  isHost,
+  onConfirm,
+  onReset,
+}: Props) {
   const options = useMemo(() => scoringCards(scale), [scale])
 
   /** O maior voto que pontua. É a sugestão padrão: quem viu mais risco. */
@@ -61,7 +72,19 @@ export function ResultsPanel({ scale, votes, scorers, isHost, onConfirm, onReset
     })
   }, [votes, scale])
 
-  const consensus = tally.length === 1
+  /**
+   * Consenso de verdade: todo mundo que tinha carta votou, e votou a mesma —
+   * numa carta que pontua. Duas pessoas de seis concordando não é consenso, é
+   * amostra pequena; e o time inteiro tirando "?" é dúvida unânime, não acordo.
+   */
+  const consensus =
+    tally.length === 1 &&
+    votes.length >= 2 &&
+    votes.length === voterCount &&
+    cardByLabel(scale, tally[0][0])?.value !== null &&
+    cardByLabel(scale, tally[0][0]) !== undefined
+
+  const [celebrated, setCelebrated] = useState(false)
 
   const spreadEvenly = () => {
     if (pending || scorers.length === 0) return
@@ -98,14 +121,31 @@ export function ResultsPanel({ scale, votes, scorers, isHost, onConfirm, onReset
   }
 
   return (
-    <div className="card-surface animate-pop-in mx-auto w-full max-w-3xl p-7">
+    <div
+      className={cx(
+        'card-surface animate-pop-in mx-auto w-full max-w-3xl p-7',
+        consensus && 'ring-rainbow',
+      )}
+    >
+      {consensus && !celebrated && (
+        <ConsensusBurst
+          value={tally[0][0]}
+          voters={votes.length}
+          onDone={() => setCelebrated(true)}
+        />
+      )}
+
       {/* Distribuição dos votos */}
       <div className="mb-7">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
             Como o time votou
           </h3>
-          {consensus && <Badge color="var(--color-mint)">Consenso 🎯</Badge>}
+          {consensus && (
+            <span className="animate-pop-in rounded-full bg-[linear-gradient(100deg,var(--color-brand-500),var(--color-punch),var(--color-zest))] px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-lg">
+              Consenso 🎯
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-3">
