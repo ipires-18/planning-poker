@@ -157,8 +157,8 @@ Resumo do que protege o quê:
 | Papel que não pontua | `role_scores()` barra a alocação no `commit_story`, inclusive para o PO com baralho |
 | Link de história | Só `http`/`https`, validado no banco e no cliente |
 | Chave no código | Nenhuma: tudo vem de `.env.local`, que está no `.gitignore` |
-| Função com privilégio | As 29 `security definer` fixam `search_path` |
-| Privilégio de tabela | Só `select`, só para `authenticated`, escrito nas migrações |
+| Função com privilégio | As 27 `security definer` fixam `search_path` |
+| Privilégio de tabela | `authenticated` só tem `select`; `anon` não tem nada |
 | Clickjacking / MIME / CSP | Cabeçalhos no `vercel.json` |
 | Enchente de salas | Teto de 5 sessões abertas por pessoa |
 | Escrita fora das regras | Nenhuma policy de escrita: tudo passa pelas funções |
