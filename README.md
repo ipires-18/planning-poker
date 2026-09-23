@@ -339,6 +339,125 @@ A vitrine roda em `apps/docs` com playground ao vivo:
 pnpm --filter @pp/docs dev    # http://localhost:3100
 ```
 
+## Como abrir um PR
+
+O caminho inteiro, com um exemplo de verdade: acrescentar um estilo de
+pontuação novo, a escala de horas.
+
+**1. Fork, clone e branch a partir da `main` atualizada.**
+
+```bash
+gh repo fork ipires-18/planning-poker --clone
+cd planning-poker
+git switch main && git pull
+git switch -c escala-de-horas
+```
+
+O nome da branch diz o que muda, em português e com hífen. Nada de `fix-1` ou
+`minha-branch`: a lista de branches é lida por gente.
+
+**2. Suba o ambiente local.**
+
+```bash
+pnpm install
+pnpm db:start                                   # Supabase em Docker
+pnpm db:reset                                   # aplica as migrations
+cp apps/web/.env.example apps/web/.env.local    # use a URL e a anon key que o db:start imprime
+pnpm dev
+```
+
+Desenvolva contra o banco local, nunca contra a produção — o `smoke` nem roda
+fora da máquina.
+
+**3. Faça a mudança.** Duas regras que não são óbvias:
+
+- **Mexeu no banco? Migration nova, nunca edição de uma antiga.** As que já
+  existem já rodaram na produção. Numere a partir da última:
+  `packages/db/supabase/migrations/0019_escala_de_horas.sql`.
+- **Não edite `packages/ds/src/ui/`.** São os componentes do shadcn byte a byte;
+  ajuste vai em `atoms/` (ver [Design system](#design-system)).
+
+**4. Rode as verificações antes de subir.** É o que alguém vai rodar na revisão:
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm build
+pnpm smoke      # precisa do db:start de pé
+```
+
+Se o `smoke` não cobre o que você mudou, acrescente a verificação no mesmo PR.
+
+**5. Commit no estilo do histórico.** Título curto em português, dizendo o que
+muda — sem `feat:`, sem ponto final. O corpo explica o **porquê**, que é o que o
+diff não mostra:
+
+```bash
+git add -A
+git commit
+```
+
+```
+Escala de horas como estilo de pontuação
+
+Times que estimam em horas usavam a escala personalizada e digitavam os
+mesmos oito números em toda sprint. Agora é um estilo pronto: 1, 2, 4, 8,
+12, 16, 24 e 40.
+
+O valor da carta é a própria hora, então a divisão de pontos continua
+fechando com o total da história sem conversão nenhuma.
+```
+
+Um assunto por commit. Se no caminho você consertou outra coisa, ela vira outro
+commit — ou outro PR.
+
+**6. Push e abertura do PR.**
+
+```bash
+git push -u origin escala-de-horas
+gh pr create --base main --title "Escala de horas como estilo de pontuação" --body-file -
+```
+
+E o corpo, colado no terminal (termine com `Ctrl+D`):
+
+```markdown
+## O que muda
+
+Novo estilo de pontuação, **Horas**: 1, 2, 4, 8, 12, 16, 24, 40.
+
+## Por quê
+
+Times que estimam em horas recriavam a escala personalizada toda sprint.
+
+## Como testar
+
+1. `pnpm db:reset && pnpm dev`
+2. Em `/new`, escolha **Horas** em Estilo de pontuação
+3. Vote numa história, revele e divida os pontos: a soma tem que fechar
+
+## Verificações
+
+- [x] `pnpm typecheck`
+- [x] `pnpm lint`
+- [x] `pnpm build`
+- [x] `pnpm smoke`
+- [x] Migration nova (`0019_escala_de_horas.sql`), nenhuma antiga editada
+- [ ] Mudança visual? Print claro e escuro abaixo
+```
+
+Mexeu na interface, anexe print nos dois temas. Mexeu em RLS ou em função
+`security definer`, diga no corpo quem passa a poder fazer o quê — é a parte do
+PR que mais precisa de olho.
+
+**7. Depois da revisão.** Ajustes entram como commits novos na mesma branch
+(`git push` atualiza o PR). Se a `main` andou, traga com rebase, não com merge:
+
+```bash
+git fetch upstream
+git rebase upstream/main
+git push --force-with-lease
+```
+
 ## Sobre a reconstrução
 
 Esta é a segunda versão do projeto. A primeira usava Firebase Realtime Database
