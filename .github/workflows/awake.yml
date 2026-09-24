@@ -1,0 +1,41 @@
+# A visita ao Supabase, sem depender de alguém lembrar.
+#
+# O plano Free do Supabase pausa o projeto quando há pouca atividade no banco ao
+# longo de 7 dias. Todo dia este workflow roda o mesmo `pnpm awake` que se roda
+# à mão: entra como convidado e lê uma linha. Diário, e não semanal, porque a
+# documentação fala em "alguns requests por dia" — uma visita por semana fica no
+# limite. Só usa a anon key, que já vai no bundle público.
+#
+# Precisa de dois secrets no repositório: SUPABASE_URL e SUPABASE_ANON_KEY, com
+# os valores de produção do apps/web/.env.local.
+
+name: Visita ao Supabase
+
+on:
+  schedule:
+    # O cron do GitHub é em UTC: 12h UTC são 9h em Brasília.
+    - cron: '0 12 * * *'
+  # Botão "Run workflow" na aba Actions, para testar ou acordar fora de hora.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  awake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      # Só o pacote do banco, e sem devDependencies: o CLI do Supabase baixa um
+      # binário que a visita não usa.
+      - run: pnpm install --filter @pp/db --prod --frozen-lockfile
+      - run: pnpm awake
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}

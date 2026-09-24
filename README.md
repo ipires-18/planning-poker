@@ -258,7 +258,7 @@ rodar se o `.env.local` estiver apontando para fora da máquina. Para forçar,
 | `pnpm demo:consenso 13` | Deixa uma sala pronta para ver a comemoração |
 | `pnpm awake` | Visita a produção para o projeto não pausar (ver abaixo) |
 
-## A visita semanal
+## A visita diária
 
 O plano Free do Supabase **pausa um projeto depois de 7 dias sem atividade**.
 Despausar é um botão no painel, mas quem descobre que era preciso é a pessoa que
@@ -273,9 +273,21 @@ Não cria sala, não escreve nada e não usa chave secreta. Aponta para a produ�
 lendo `apps/web/.env.local`, e recusa rodar contra um banco local, onde não há o
 que acordar.
 
-Rodar uma vez por semana basta. Na prática, o melhor momento é logo antes de
-mandar o link para alguém: aí você confirma que está de pé no único momento em
-que isso importa.
+Ninguém precisa lembrar: `.github/workflows/awake.yml` roda o mesmo comando
+todo dia às 9h (Brasília), e dá para disparar à mão na aba **Actions**. Diário
+porque a documentação do Supabase fala em "alguns requests por dia" — uma
+visita por semana fica no limite. Ele lê dois secrets do repositório, com os
+valores de produção:
+
+```bash
+gh secret set SUPABASE_URL
+gh secret set SUPABASE_ANON_KEY
+```
+
+A visita evita a pausa, não a desfaz: se o projeto já estiver pausado, só o
+botão de restaurar no painel traz ele de volta. E o GitHub desliga workflows
+agendados de repositório público depois de 60 dias sem commit — se o e-mail
+avisando disso chegar, é só reativar na aba **Actions**.
 
 ## Estrutura
 
