@@ -39,7 +39,12 @@ export function summarize(state: RoomState): PlayerSummary[] {
   const byStory = new Map<string, Story>(state.stories.map((s) => [s.id, s]))
 
   const rows = scorersOf(state.players).map((player) => {
-    const mine = state.participants.filter((p: StoryParticipant) => p.player_id === player.id)
+    // O fechamento grava uma linha para cada pontuador, inclusive quem ficou
+    // com zero; só conta como "da pessoa" o que ela de fato recebeu.
+    const mine = state.participants.filter(
+      (p: StoryParticipant) =>
+        p.player_id === player.id && (p.pending || Number(p.points) > 0),
+    )
 
     const stories: ScoredStory[] = mine
       .map((participation) => {

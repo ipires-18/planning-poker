@@ -139,7 +139,7 @@ function ScorerRow({
           {stories.map((story) => (
             <li
               key={`${story.storyId}-${story.side}`}
-              className="flex items-center justify-between gap-2 text-[11px] text-ink-subtle"
+              className="flex items-center gap-2 text-[11px] text-ink-subtle"
             >
               {safeUrl(story.link) ? (
                 <a
