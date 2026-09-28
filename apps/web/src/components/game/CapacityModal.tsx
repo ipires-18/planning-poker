@@ -35,7 +35,7 @@ export function CapacityModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Time e capacidade" size="lg">
+    <Modal open={open} onClose={onClose} title="Configurações da sprint" size="lg">
       <CapacityPanel
         capacity={capacity}
         sprint={sprint}

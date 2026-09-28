@@ -81,6 +81,11 @@ export function RoomHeader({
 
           {isHost && (
             <>
+              {onOpenCapacity && (
+                <Button variant="ghost" size="sm" onClick={onOpenCapacity}>
+                  ⚙ Configurações
+                </Button>
+              )}
               {!sprintComplete && (
                 <Button variant="white" size="sm" onClick={onAddStory}>
                   + História
