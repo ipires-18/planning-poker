@@ -107,6 +107,11 @@ export function useGameActions(roomId: string, refresh: () => Promise<void>) {
       adjustPoints: (storyId: string, playerId: string, side: VotingSide, points: number) =>
         mutate(() => api.adjustParticipantPoints(storyId, playerId, side, points)),
 
+      reassignStory: (storyId: string, side: VotingSide, fromId: string, toId: string) =>
+        mutate(() => api.reassignStory(storyId, side, fromId, toId)),
+
+      removePlayer: (playerId: string) => mutate(() => api.removePlayer(playerId)),
+
       /* --- sessão -------------------------------------------------------- */
       endGame: (continueLater: boolean) => mutate(() => api.endGame(roomId, continueLater)),
       resumeGame: () => mutate(() => api.resumeGame(roomId)),

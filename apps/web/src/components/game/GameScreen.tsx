@@ -92,6 +92,10 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
           watchers={view.watchers}
           online={online}
           youId={userId}
+          ownerId={room.owner_user_id}
+          isHost={view.isHost}
+          onReassign={actions.reassignStory}
+          onRemove={actions.removePlayer}
         />
 
         <main className="flex min-w-0 flex-1 flex-col">
