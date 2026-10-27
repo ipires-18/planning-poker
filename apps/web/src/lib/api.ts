@@ -266,6 +266,33 @@ export async function setOptionalVoter(roomId: string, role: OptionalVoterRole, 
   )
 }
 
+/**
+ * Passa a parte de uma pessoa numa história para outra. O total da história
+ * não muda; se quem recebe já tinha parte nela, as partes se somam.
+ */
+export async function reassignStory(
+  storyId: string,
+  side: VotingSide,
+  fromPlayerId: string,
+  toPlayerId: string,
+) {
+  fail(
+    (
+      await supabase.rpc('reassign_story', {
+        p_story_id: storyId,
+        p_side: side,
+        p_from: fromPlayerId,
+        p_to: toPlayerId,
+      })
+    ).error,
+  )
+}
+
+/** Tira alguém da sala. Só funciona com a pessoa sem pontos no placar. */
+export async function removePlayer(playerId: string) {
+  fail((await supabase.rpc('remove_player', { p_player_id: playerId })).error)
+}
+
 /** Timebox da discussão por história. 0 desliga o aviso. */
 export async function setDiscussionLimit(roomId: string, seconds: number) {
   fail(
