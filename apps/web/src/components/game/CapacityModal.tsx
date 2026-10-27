@@ -15,6 +15,7 @@ interface Props {
   onSaveCapacity: (entries: CapacityEntry[]) => Promise<void>
   onToggleOptionalVoter: (role: OptionalVoterRole, enabled: boolean) => Promise<void>
   onSetDiscussionLimit: (seconds: number) => Promise<void>
+  onSetPartyKit: (code: string) => Promise<string | null>
 }
 
 export function CapacityModal({
@@ -27,6 +28,7 @@ export function CapacityModal({
   onSaveCapacity,
   onToggleOptionalVoter,
   onSetDiscussionLimit,
+  onSetPartyKit,
 }: Props) {
   const sprint: SprintWindow = {
     start: room.sprint_start,
@@ -44,6 +46,8 @@ export function CapacityModal({
         onToggleOptionalVoter={(role, enabled) => void onToggleOptionalVoter(role, enabled)}
         discussionLimit={room.discussion_limit_seconds}
         onSetDiscussionLimit={(seconds) => void onSetDiscussionLimit(seconds)}
+        partyKit={room.party_kit}
+        onSetPartyKit={onSetPartyKit}
         onSaveWindow={onSaveWindow}
         onSaveCapacity={async (entries) => {
           await onSaveCapacity(entries)

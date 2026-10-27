@@ -15,6 +15,7 @@ import { CapacityModal } from './CapacityModal'
 import { EndSessionModal } from './EndSessionModal'
 import { PausedScreen } from './PausedScreen'
 import { useGameActions } from '@/hooks/useGameActions'
+import { usePartyKit } from '@/hooks/usePartyKit'
 import { useTheme } from '@/hooks/useTheme'
 import { buildGameView } from '@/lib/gameView'
 import type { RoomState } from '@/types'
@@ -38,6 +39,7 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
   const [endOpen, setEndOpen] = useState(false)
 
   const view = useMemo(() => buildGameView(state, userId), [state, userId])
+  const party = usePartyKit(state.room.party_kit)
   const { room } = state
   // Numa constante local o TypeScript consegue estreitar o tipo dentro dos
   // callbacks; lida de `view.currentStory` a cada uso, exigiria `!` em todos.
@@ -142,6 +144,7 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
                     scorers={view.scorers}
                     voterCount={view.voterCount}
                     isHost={view.isHost}
+                    party={party}
                     onConfirm={actions.confirmStory}
                     onReset={() => void actions.resetRound()}
                   />
@@ -203,6 +206,7 @@ export function GameScreen({ roomId, state, userId, online, refresh }: Props) {
         onSaveCapacity={actions.setCapacity}
         onToggleOptionalVoter={actions.setOptionalVoter}
         onSetDiscussionLimit={actions.setDiscussionLimit}
+        onSetPartyKit={actions.setPartyKit}
       />
     </div>
   )

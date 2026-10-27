@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Button, Input } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import { SprintWindowPicker } from './SprintWindowPicker'
-import { DiscussionLimitPicker, OptionalVoterToggles } from './SessionRules'
+import { DiscussionLimitPicker, OptionalVoterToggles, PartyKitPicker } from './SessionRules'
 import { useCapacityDraft, type WindowDraft } from '@/hooks/useCapacityDraft'
 import type { TeamCapacity } from '@/lib/derive'
 import { ROLE_SHORT, type CapacityEntry, type Player } from '@/types'
@@ -18,8 +18,11 @@ interface Props {
   votersPresent: OptionalVoterRole[]
   /** Timebox de discussão por história, em segundos. 0 = sem aviso. */
   discussionLimit: number
+  /** Kit da festa do time ligado na sala, ou null. */
+  partyKit: string | null
   onToggleOptionalVoter: (role: OptionalVoterRole, enabled: boolean) => void
   onSetDiscussionLimit: (seconds: number) => void
+  onSetPartyKit: (code: string) => Promise<string | null>
   onSaveWindow: (next: WindowDraft) => Promise<void>
   onSaveCapacity: (entries: CapacityEntry[]) => Promise<void>
 }
@@ -30,8 +33,10 @@ export function CapacityPanel({
   optionalVoters,
   votersPresent,
   discussionLimit,
+  partyKit,
   onToggleOptionalVoter,
   onSetDiscussionLimit,
+  onSetPartyKit,
   onSaveWindow,
   onSaveCapacity,
 }: Props) {
@@ -61,6 +66,10 @@ export function CapacityPanel({
 
       <Section title="Ritmo da discussão" divided>
         <DiscussionLimitPicker value={discussionLimit} onChange={onSetDiscussionLimit} />
+      </Section>
+
+      <Section title="Festa do time" divided>
+        <PartyKitPicker value={partyKit} onChange={onSetPartyKit} />
       </Section>
 
       <Section title="Janela da sprint" divided>

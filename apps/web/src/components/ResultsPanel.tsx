@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { Button, Select } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import { ConsensusBurst } from './ConsensusBurst'
+import { TeamConsensusParty } from './TeamConsensusParty'
+import type { PartyKit } from '@/lib/teamParty'
 import { VoteTally } from './results/VoteTally'
 import { AllocationRow } from './results/AllocationRow'
 import { BalanceBadge } from './results/BalanceBadge'
@@ -19,6 +21,8 @@ interface Props {
   /** Quantas pessoas tinham baralho nesta rodada. */
   voterCount: number
   isHost: boolean
+  /** Fotos da festa do time, quando a sala tem um kit ligado. */
+  party: PartyKit | null
   onConfirm: (points: number | null, allocations: Allocation[]) => Promise<void>
   onReset: () => void
 }
@@ -29,6 +33,7 @@ export function ResultsPanel({
   scorers,
   voterCount,
   isHost,
+  party,
   onConfirm,
   onReset,
 }: Props) {
@@ -61,11 +66,22 @@ export function ResultsPanel({
       )}
     >
       {consensus && !celebrated && (
-        <ConsensusBurst
-          value={tally[0].label}
-          voters={votes.length}
-          onDone={() => setCelebrated(true)}
-        />
+        // Com a festa do time ligada na sala, a comemoração veste o uniforme;
+        // sem ela, a explosão neutra de sempre.
+        party ? (
+          <TeamConsensusParty
+            value={tally[0].label}
+            voters={votes.length}
+            party={party}
+            onDone={() => setCelebrated(true)}
+          />
+        ) : (
+          <ConsensusBurst
+            value={tally[0].label}
+            voters={votes.length}
+            onDone={() => setCelebrated(true)}
+          />
+        )
       )}
 
       <VoteTally tally={tally} consensus={consensus} />

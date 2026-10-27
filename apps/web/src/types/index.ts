@@ -58,6 +58,8 @@ export interface Room {
   optional_voters: OptionalVoterRole[]
   /** Timebox de discussão por história, em segundos. 0 desliga o aviso. */
   discussion_limit_seconds: number
+  /** Kit da festa do time ligado nesta sala, ou null para a comemoração neutra. */
+  party_kit: string | null
 }
 
 export interface Player {
