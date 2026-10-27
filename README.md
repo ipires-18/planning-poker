@@ -71,6 +71,10 @@ packages/
   explosão que sai do centro da mesa, diferente do confete do fim da planning. A
   frase é configurável por ambiente (`VITE_CONSENSUS_CHEERS`), porque piada
   interna é metade da graça de uma cerimônia.
+- **Festa do time**: com um kit ligado na sala, o consenso vira um letreiro de
+  lâmpadas com o número, uma polaroid com foto do time, flores de colar caindo e
+  caricaturas passando correndo. As fotos ficam num bucket privado e só quem
+  está na sala vê — veja [Festa do time](#festa-do-time).
 - **Parar hoje e continuar em outro dia**: quando sobram histórias na fila,
   encerrar vira uma escolha. Pausada, a sala guarda o histórico por sete dias e
   o PO ou Tech Lead dá o start de onde o time parou — com 24 horas novas.
@@ -242,6 +246,32 @@ RLS inteiro.
 Os scripts que criam dados de mentira (`smoke`, `demo:consenso`) se recusam a
 rodar se o `.env.local` estiver apontando para fora da máquina. Para forçar,
 `ALLOW_REMOTE=1`.
+
+## Festa do time
+
+Um kit é uma pasta de fotos no bucket privado `party` mais um código. Quem
+conduz a sala abre **Configurações da sprint → Festa do time**, digita o código,
+e o consenso daquela sala passa a comemorar com as fotos.
+
+A regra de quem vê está no banco (migração 0019): o bucket não tem URL pública,
+e a policy de `storage.objects` só libera a pasta de um kit para quem está
+sentado numa sala viva com ele ligado. Ligar pede o código, guardado só como
+hash — senão bastaria criar uma sala anônima qualquer para ver as fotos.
+
+Os kits não estão no repositório: são dados do time, e o repo é público. Para
+criar um:
+
+```bash
+# 1. o kit e o código (o id vira o nome da pasta)
+supabase db query --linked "insert into party_kits (id, name, code_hash)
+  values ('meu-time', 'Meu Time', extensions.crypt('<código>', extensions.gen_salt('bf', 10)))"
+
+# 2. as fotos (até 2 MB cada, jpeg/png/webp) e, se quiser, as caricaturas
+supabase storage cp --experimental --linked foto.jpg ss:///party/meu-time/photos/foto.jpg
+supabase storage cp --experimental --linked cara.jpg ss:///party/meu-time/stickers/cara.jpg
+```
+
+Foto de gente só entra com o combinado de quem aparece nela.
 
 ## Scripts
 

@@ -274,6 +274,17 @@ export async function setDiscussionLimit(roomId: string, seconds: number) {
   )
 }
 
+/**
+ * Liga a festa do time pelo código do kit, ou desliga com código vazio.
+ * Devolve o nome do kit ligado. Código errado vira erro com mensagem própria.
+ */
+export async function setPartyKit(roomId: string, code: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('set_party_kit', { p_room_id: roomId, p_code: code })
+  if (error?.code === '28000') throw new Error('Esse código não abre nenhuma festa.')
+  fail(error)
+  return data as string | null
+}
+
 /** `continueLater` pausa em vez de encerrar de vez: o histórico fica esperando. */
 export async function endGame(roomId: string, continueLater: boolean) {
   fail((await supabase.rpc('end_game', { p_room_id: roomId, p_continue: continueLater })).error)

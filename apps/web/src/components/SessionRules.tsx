@@ -1,4 +1,5 @@
-import { Button } from '@pp/ds/atoms'
+import { useState } from 'react'
+import { Button, Input, Note } from '@pp/ds/atoms'
 import { cx } from '@/lib/cx'
 import { OPTIONAL_VOTERS, ROLE_LABEL, type OptionalVoterRole } from '@/types'
 
@@ -140,6 +141,86 @@ export function OptionalVoterToggles({
           onChange={(enabled) => onChange(papel, enabled)}
         />
       ))}
+    </div>
+  )
+}
+
+/**
+ * A festa do time: liga as fotos da galera na comemoração de consenso.
+ *
+ * Pede o código do kit porque as fotos são de gente real e o app é aberto —
+ * quem não tem o código não liga a festa, e quem não está numa sala com ela
+ * ligada não lê as fotos (a regra está no banco, migração 0019).
+ */
+export function PartyKitPicker({
+  value,
+  onChange,
+}: {
+  /** O kit ligado na sala, ou null. */
+  value: string | null
+  /** Liga com o código, ou desliga com código vazio. Devolve o nome do kit. */
+  onChange: (code: string) => Promise<string | null>
+}) {
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const submit = async (next: string) => {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      await onChange(next)
+      setCode('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não deu para mudar a festa')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (value) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl ds-accent-wash p-4">
+        <span className="text-sm text-ink">
+          <span className="font-bold">Festa ligada</span> — consenso nesta sala comemora com as
+          fotos do kit <span className="font-bold">{value}</span>.
+        </span>
+        <Button size="sm" variant="outline" isDisabled={busy} onClick={() => void submit('')}>
+          Desligar
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <form
+        className="flex flex-wrap gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (code.trim()) void submit(code)
+        }}
+      >
+        <Input
+          size="sm"
+          type="password"
+          autoComplete="off"
+          placeholder="Código da festa"
+          aria-label="Código da festa"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          className="min-w-0 flex-1"
+        />
+        <Button size="sm" type="submit" isDisabled={busy || !code.trim()}>
+          Ligar
+        </Button>
+      </form>
+      {error && <Note className="mt-3">{error}</Note>}
+      <p className="mt-3 text-xs leading-relaxed text-ink-subtle">
+        Com a festa ligada, quando o time inteiro cravar a mesma carta a comemoração usa as
+        fotos do time. Só quem está nesta sala vê as fotos, e só enquanto ela estiver ligada.
+      </p>
     </div>
   )
 }

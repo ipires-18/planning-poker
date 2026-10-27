@@ -96,6 +96,14 @@ export function useGameActions(roomId: string, refresh: () => Promise<void>) {
       setDiscussionLimit: (seconds: number) =>
         mutate(() => api.setDiscussionLimit(roomId, seconds)),
 
+      // Não passa pelo `run`: o erro (código errado) é mostrado ao lado do
+      // campo, e não no aviso geral da mesa.
+      setPartyKit: async (code: string) => {
+        const name = await api.setPartyKit(roomId, code)
+        await refresh()
+        return name
+      },
+
       adjustPoints: (storyId: string, playerId: string, side: VotingSide, points: number) =>
         mutate(() => api.adjustParticipantPoints(storyId, playerId, side, points)),
 
@@ -103,7 +111,7 @@ export function useGameActions(roomId: string, refresh: () => Promise<void>) {
       endGame: (continueLater: boolean) => mutate(() => api.endGame(roomId, continueLater)),
       resumeGame: () => mutate(() => api.resumeGame(roomId)),
     }),
-    [roomId, run, mutate, error],
+    [roomId, run, mutate, refresh, error],
   )
 }
 
